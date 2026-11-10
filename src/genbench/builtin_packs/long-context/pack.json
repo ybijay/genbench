@@ -1,0 +1,590 @@
+{
+  "$schema": "../../schemas/testpack.schema.json",
+  "pack": "long-context",
+  "version": "1.2.0",
+  "description": "Generated logs, sized in tokens: does the model still find, count and combine facts spread through a prompt that fills most of its context window?",
+  "tests": [
+    {
+      "id": "long_context_16k",
+      "name": "Long Context: Facts Spread Through a 16k-Token Log",
+      "description": "Reads a 16k-token inference-gateway log and answers four questions whose facts sit at different depths: two config changes, one model that failed to load, and four rate-limited requests.",
+      "goal": "Exactly {num_parallel: 3, changed_by: ops-bob, oom_model: llama3.2-vision:11b, rate_limited_count: 4}, as only a fenced JSON block. Needs a context window of at least 20k tokens.",
+      "pass": {"accuracy": 100},
+      "category": "long_context",
+      "difficulty": "medium",
+      "tags": ["long-context", "retrieval", "logs", "json"],
+      "suites": ["full"],
+      "prompt_file": "prompts/gateway_log_questions.md",
+      "context": {
+        "generator": "gateway_logs",
+        "approx_tokens": 16000,
+        "seed": 1601,
+        "plants": [
+          {
+            "at": 0.1,
+            "line": "{time} WARN gateway req=r-704511 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.22, "line": "{time} INFO config num_parallel changed 2 -> 4 by ops-alice"},
+          {
+            "at": 0.38,
+            "line": "{time} WARN gateway req=r-718206 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.45,
+            "line": "{time} ERROR loader model=llama3.2-vision:11b load failed: CUDA out of memory (needs 11.9 GiB, 3.1 GiB free); giving up after 3 attempts"
+          },
+          {
+            "at": 0.61,
+            "line": "{time} WARN gateway req=r-731940 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.7, "line": "{time} INFO config num_parallel changed 4 -> 3 by ops-bob"},
+          {
+            "at": 0.88,
+            "line": "{time} WARN gateway req=r-745317 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          }
+        ],
+        "reserved": ["status=429", "config ", "out of memory", "loader ", "ide-hanuman", "ops-"]
+      },
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "num_parallel is 3 at the end of the log",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["num_parallel"],
+              "properties": {"num_parallel": {"enum": [3, "3"]}}
+            }
+          },
+          {
+            "expect": "The last change that took effect was made by ops-bob",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["changed_by"],
+              "properties": {"changed_by": {"type": "string", "pattern": "^\\s*@?ops-bob\\s*$"}}
+            }
+          },
+          {
+            "expect": "The loader gave up on llama3.2-vision:11b",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["oom_model"],
+              "properties": {"oom_model": {"type": "string", "pattern": "^\\s*llama3\\.2-vision(:11b)?\\s*$"}}
+            }
+          },
+          {
+            "expect": "ide-hanuman-07 had 4 requests rejected with 429",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["rate_limited_count"],
+              "properties": {"rate_limited_count": {"enum": [4, "4"]}}
+            }
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "The object has exactly the four requested keys",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "object",
+              "required": ["num_parallel", "changed_by", "oom_model", "rate_limited_count"],
+              "additionalProperties": false,
+              "properties": {"num_parallel": {}, "changed_by": {}, "oom_model": {}, "rate_limited_count": {}}
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "long_context_24k",
+      "name": "Long Context: Decoys in a 24k-Token Log",
+      "description": "The same four questions over a 24k-token log full of near-misses: a look-alike client name, a model that ran out of memory but loaded on retry, a rejected config change and a change to a different setting.",
+      "goal": "Exactly {num_parallel: 5, changed_by: ops-erin, oom_model: mistral-small3.2:24b, rate_limited_count: 6}, as only a fenced JSON block. Needs a context window of at least 32k tokens.",
+      "pass": {"accuracy": 100},
+      "category": "long_context",
+      "difficulty": "hard",
+      "tags": ["long-context", "retrieval", "logs", "decoys", "json"],
+      "suites": ["full"],
+      "prompt_file": "prompts/gateway_log_questions.md",
+      "context": {
+        "generator": "gateway_logs",
+        "approx_tokens": 24000,
+        "seed": 2401,
+        "plants": [
+          {
+            "at": 0.04,
+            "line": "{time} WARN gateway req=r-600117 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.08, "line": "{time} INFO config num_parallel changed 2 -> 4 by ops-alice"},
+          {
+            "at": 0.15,
+            "line": "{time} WARN gateway req=r-612480 client=ide-hanuman-70 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.19,
+            "line": "{time} WARN gateway req=r-619935 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.25,
+            "line": "{time} INFO gateway req=r-624008 client=ide-hanuman-07 model=qwen3.6:35b status=200 in=1460 out=388 ms=2871"
+          },
+          {
+            "at": 0.37,
+            "line": "{time} WARN gateway req=r-637262 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.4,
+            "line": "{time} ERROR loader model=mistral-small3.2:24b load failed: CUDA out of memory (needs 15.1 GiB, 3.4 GiB free); giving up after 3 attempts"
+          },
+          {"at": 0.46, "line": "{time} INFO config num_parallel changed 4 -> 6 by ops-carol"},
+          {
+            "at": 0.52,
+            "line": "{time} WARN gateway req=r-651804 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.58,
+            "line": "{time} WARN gateway req=r-658113 client=ide-hanuman-70 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.6,
+            "line": "{time} INFO gateway req=r-660575 client=ide-hanuman-07 model=qwen3.6:35b status=200 in=1460 out=388 ms=2871"
+          },
+          {"at": 0.67, "line": "{time} INFO config num_parallel changed 6 -> 5 by ops-erin"},
+          {
+            "at": 0.74,
+            "line": "{time} WARN gateway req=r-672298 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.79,
+            "line": "{time} WARN loader model=qwen3.8:27b load failed: CUDA out of memory (needs 17.2 GiB, 15.8 GiB free); retrying in 30s"
+          },
+          {"at": 0.81, "line": "{time} INFO loader model=qwen3.8:27b loaded after retry in 41.7s"},
+          {
+            "at": 0.85,
+            "line": "{time} WARN config num_parallel change 5 -> 8 by ops-frank rejected: above max_parallel=6, keeping 5"
+          },
+          {
+            "at": 0.87,
+            "line": "{time} WARN gateway req=r-689421 client=ide-hanuman-70 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.91, "line": "{time} INFO config num_ctx changed 32768 -> 65536 by ops-dave"},
+          {
+            "at": 0.96,
+            "line": "{time} WARN gateway req=r-698750 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          }
+        ],
+        "reserved": ["status=429", "config ", "out of memory", "loader ", "ide-hanuman", "ops-"]
+      },
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "num_parallel is 5 at the end of the log",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["num_parallel"],
+              "properties": {"num_parallel": {"enum": [5, "5"]}}
+            }
+          },
+          {
+            "expect": "The last change that took effect was made by ops-erin",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["changed_by"],
+              "properties": {"changed_by": {"type": "string", "pattern": "^\\s*@?ops-erin\\s*$"}}
+            }
+          },
+          {
+            "expect": "The loader gave up on mistral-small3.2:24b",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["oom_model"],
+              "properties": {
+                "oom_model": {"type": "string", "pattern": "^\\s*mistral-small3\\.2(:24b)?\\s*$"}
+              }
+            }
+          },
+          {
+            "expect": "ide-hanuman-07 had 6 requests rejected with 429",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["rate_limited_count"],
+              "properties": {"rate_limited_count": {"enum": [6, "6"]}}
+            }
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "The object has exactly the four requested keys",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "object",
+              "required": ["num_parallel", "changed_by", "oom_model", "rate_limited_count"],
+              "additionalProperties": false,
+              "properties": {"num_parallel": {}, "changed_by": {}, "oom_model": {}, "rate_limited_count": {}}
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "long_context_tally_12k",
+      "name": "Long Context: Tallies Across a 12k-Token Log",
+      "description": "Six questions that each need every line of a 12k-token gateway log: two counts, a total, the slowest request, the worst health check, and one question the log cannot answer.",
+      "goal": "At least five of six right: 8 requests returned 502; the 499s add up to 9,827 input tokens; 3 notebook-lab-3 requests used nomic-embed-text; the slowest request is r-693757; the worst p95 is 2,200 ms; and no client was rate-limited (null). Sized so a model with a 32k context window keeps about 20k tokens to work through the log.",
+      "pass": {"accuracy": 80},
+      "category": "long_context",
+      "difficulty": "hard",
+      "tags": ["long-context", "counting", "logs", "abstention", "json"],
+      "suites": ["full"],
+      "prompt_file": "prompts/gateway_log_tallies.md",
+      "context": {
+        "generator": "gateway_logs",
+        "approx_tokens": 12000,
+        "seed": 1201,
+        "reserved": ["status=429"]
+      },
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Counts the 8 requests that returned 502",
+            "check": "json_schema",
+            "points": 17,
+            "schema": {
+              "type": "object",
+              "required": ["bad_gateway_count"],
+              "properties": {"bad_gateway_count": {"enum": [8, "8"]}}
+            }
+          },
+          {
+            "expect": "Adds up the in= values of the six 499 requests: 9,827",
+            "check": "json_schema",
+            "points": 17,
+            "schema": {
+              "type": "object",
+              "required": ["cancelled_input_tokens"],
+              "properties": {"cancelled_input_tokens": {"enum": [9827, "9827"]}}
+            }
+          },
+          {
+            "expect": "Counts the 3 notebook-lab-3 requests that used nomic-embed-text",
+            "check": "json_schema",
+            "points": 17,
+            "schema": {
+              "type": "object",
+              "required": ["notebook_embed_count"],
+              "properties": {"notebook_embed_count": {"enum": [3, "3"]}}
+            }
+          },
+          {
+            "expect": "Names r-693757 (9,248 ms) as the slowest request, not the runner-up at 9,208 ms",
+            "check": "json_schema",
+            "points": 17,
+            "schema": {
+              "type": "object",
+              "required": ["slowest_request"],
+              "properties": {
+                "slowest_request": {
+                  "anyOf": [{"type": "string", "pattern": "^\\s*(req=)?(r-)?693757\\s*$"}, {"const": 693757}]
+                }
+              }
+            }
+          },
+          {
+            "expect": "Finds the highest health-check p95: 2,200 ms",
+            "check": "json_schema",
+            "points": 16,
+            "schema": {
+              "type": "object",
+              "required": ["worst_health_p95_ms"],
+              "properties": {"worst_health_p95_ms": {"enum": [2200, "2200"]}}
+            }
+          },
+          {
+            "expect": "Answers null for the rate-limited client: the log has no 429",
+            "check": "json_schema",
+            "points": 16,
+            "schema": {
+              "type": "object",
+              "required": ["rate_limited_client"],
+              "properties": {
+                "rate_limited_client": {
+                  "anyOf": [
+                    {"type": "null"},
+                    {"type": "string", "pattern": "^\\s*([Nn]ull|NULL|[Nn]one|NONE)?\\s*$"}
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 40
+          },
+          {
+            "expect": "The object has exactly the six requested keys",
+            "check": "json_schema",
+            "points": 30,
+            "schema": {
+              "type": "object",
+              "required": [
+                "bad_gateway_count",
+                "cancelled_input_tokens",
+                "notebook_embed_count",
+                "slowest_request",
+                "worst_health_p95_ms",
+                "rate_limited_client"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bad_gateway_count": {},
+                "cancelled_input_tokens": {},
+                "notebook_embed_count": {},
+                "slowest_request": {},
+                "worst_health_p95_ms": {},
+                "rate_limited_client": {}
+              }
+            }
+          },
+          {
+            "expect": "Numbers are JSON integers, the req id is a string, and 'none' is a JSON null",
+            "check": "json_schema",
+            "points": 30,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "bad_gateway_count": {"type": "integer"},
+                "cancelled_input_tokens": {"type": "integer"},
+                "notebook_embed_count": {"type": "integer"},
+                "slowest_request": {"type": "string"},
+                "worst_health_p95_ms": {"type": "integer"},
+                "rate_limited_client": {
+                  "anyOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-z].*[0-9]$"}]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "long_context_48k",
+      "name": "Long Context: Decoys in a 48k-Token Log",
+      "description": "The four questions of the 24k test over a 48k-token log, for models with a 64k context window: nine rate-limited requests to count among two look-alike clients, two models that ran out of memory but loaded on retry, a rejected config change and changes to other settings.",
+      "goal": "Exactly {num_parallel: 4, changed_by: ops-erin, oom_model: llama3.2-vision:11b, rate_limited_count: 9}, as only a fenced JSON block. Needs a 64k context window (about 52k tokens); models with less skip the test.",
+      "pass": {"accuracy": 100},
+      "category": "long_context",
+      "difficulty": "hard",
+      "tags": ["long-context", "retrieval", "logs", "decoys", "json", "64k"],
+      "suites": ["full"],
+      "prompt_file": "prompts/gateway_log_questions.md",
+      "context": {
+        "generator": "gateway_logs",
+        "approx_tokens": 48000,
+        "seed": 4801,
+        "plants": [
+          {
+            "at": 0.03,
+            "line": "{time} WARN gateway req=r-500913 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.06, "line": "{time} INFO config num_parallel changed 2 -> 4 by ops-alice"},
+          {
+            "at": 0.09,
+            "line": "{time} WARN gateway req=r-507228 client=ide-hanuman-70 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.11,
+            "line": "{time} WARN gateway req=r-511406 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.15,
+            "line": "{time} WARN loader model=qwen3.8:27b load failed: CUDA out of memory (needs 17.2 GiB, 15.8 GiB free); retrying in 30s"
+          },
+          {"at": 0.16, "line": "{time} INFO loader model=qwen3.8:27b loaded after retry in 41.7s"},
+          {
+            "at": 0.18,
+            "line": "{time} INFO gateway req=r-518340 client=ide-hanuman-07 model=qwen3.6:35b status=200 in=1460 out=388 ms=2871"
+          },
+          {"at": 0.21, "line": "{time} INFO config num_parallel changed 4 -> 6 by ops-carol"},
+          {
+            "at": 0.24,
+            "line": "{time} WARN gateway req=r-524871 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.27,
+            "line": "{time} WARN gateway req=r-527093 client=ide-hanuman-17 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.31,
+            "line": "{time} WARN gateway req=r-531655 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.34, "line": "{time} INFO config num_ctx changed 32768 -> 65536 by ops-dave"},
+          {
+            "at": 0.39,
+            "line": "{time} WARN gateway req=r-539012 client=ide-hanuman-70 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.44,
+            "line": "{time} WARN gateway req=r-544780 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {"at": 0.48, "line": "{time} INFO config num_parallel changed 6 -> 3 by ops-bob"},
+          {
+            "at": 0.52,
+            "line": "{time} WARN gateway req=r-552369 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.55,
+            "line": "{time} ERROR loader model=llama3.2-vision:11b load failed: CUDA out of memory (needs 11.9 GiB, 3.1 GiB free); giving up after 3 attempts"
+          },
+          {
+            "at": 0.58,
+            "line": "{time} INFO gateway req=r-558144 client=ide-hanuman-07 model=qwen3.6:35b status=200 in=1460 out=388 ms=2871"
+          },
+          {"at": 0.63, "line": "{time} INFO config num_parallel changed 3 -> 4 by ops-erin"},
+          {
+            "at": 0.69,
+            "line": "{time} WARN gateway req=r-569507 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.72,
+            "line": "{time} WARN gateway req=r-572836 client=ide-hanuman-70 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.77,
+            "line": "{time} WARN config num_parallel change 4 -> 8 by ops-frank rejected: above max_parallel=6, keeping 4"
+          },
+          {
+            "at": 0.81,
+            "line": "{time} WARN gateway req=r-581290 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.83,
+            "line": "{time} WARN loader model=mistral-small3.2:24b load failed: CUDA out of memory (needs 15.1 GiB, 12.6 GiB free); retrying in 30s"
+          },
+          {"at": 0.84, "line": "{time} INFO loader model=mistral-small3.2:24b loaded after retry in 38.2s"},
+          {
+            "at": 0.88,
+            "line": "{time} WARN gateway req=r-588614 client=ide-hanuman-17 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          },
+          {
+            "at": 0.9,
+            "line": "{time} INFO gateway req=r-590377 client=ide-hanuman-07 model=qwen3.6:35b status=200 in=1460 out=388 ms=2871"
+          },
+          {"at": 0.92, "line": "{time} INFO config keep_alive changed 15m -> 30m by ops-alice"},
+          {
+            "at": 0.97,
+            "line": "{time} WARN gateway req=r-597045 client=ide-hanuman-07 model=qwen3.6:35b status=429 in=2210 out=0 ms=3 reason=rate_limit_per_minute"
+          }
+        ],
+        "reserved": ["status=429", "config ", "out of memory", "loader ", "ide-hanuman", "ops-"]
+      },
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "num_parallel is 4 at the end of the log",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["num_parallel"],
+              "properties": {"num_parallel": {"enum": [4, "4"]}}
+            }
+          },
+          {
+            "expect": "The last change that took effect was made by ops-erin",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["changed_by"],
+              "properties": {"changed_by": {"type": "string", "pattern": "^\\s*@?ops-erin\\s*$"}}
+            }
+          },
+          {
+            "expect": "The loader gave up on llama3.2-vision:11b",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["oom_model"],
+              "properties": {"oom_model": {"type": "string", "pattern": "^\\s*llama3\\.2-vision(:11b)?\\s*$"}}
+            }
+          },
+          {
+            "expect": "ide-hanuman-07 had 9 requests rejected with 429",
+            "check": "json_schema",
+            "points": 25,
+            "schema": {
+              "type": "object",
+              "required": ["rate_limited_count"],
+              "properties": {"rate_limited_count": {"enum": [9, "9"]}}
+            }
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "The object has exactly the four requested keys",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "object",
+              "required": ["num_parallel", "changed_by", "oom_model", "rate_limited_count"],
+              "additionalProperties": false,
+              "properties": {"num_parallel": {}, "changed_by": {}, "oom_model": {}, "rate_limited_count": {}}
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

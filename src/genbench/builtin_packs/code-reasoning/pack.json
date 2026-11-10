@@ -1,0 +1,250 @@
+{
+  "$schema": "../../schemas/testpack.schema.json",
+  "pack": "code-reasoning",
+  "version": "1.1.0",
+  "description": "Reading code instead of writing it: predict what a script prints and find planted bugs by line number. Every answer is exact, and no generated code is run.",
+  "tests": [
+    {
+      "id": "code_trace_python",
+      "name": "Code Reasoning: Predict a Script's Output",
+      "description": "Shows a 77-line Python script and asks what eight print statements output, without running it. Each one turns on a different language rule: shared default arguments, late-binding closures, used-up generators, class versus instance attributes, return in finally, floor division of negatives, aliasing and round-half-to-even.",
+      "goal": "At least seven of the eight outputs exactly right, returned as only a JSON object with keys q1 to q8.",
+      "pass": {"accuracy": 85},
+      "category": "coding",
+      "difficulty": "hard",
+      "tags": ["code-reasoning", "python", "tracing", "json"],
+      "suites": ["standard", "full"],
+      "prompt_file": "prompts/code_trace_python.md",
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Q1 is ['a', 'c']: the default list is shared between calls, and the second call used its own",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {
+              "type": "object",
+              "required": ["q1"],
+              "properties": {"q1": {"enum": [["a", "c"], [["a", "c"]]]}}
+            }
+          },
+          {
+            "expect": "Q2 is [True, True]: both lambdas see the last limit, 8",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {
+              "type": "object",
+              "required": ["q2"],
+              "properties": {"q2": {"enum": [[true, true], [[true, true]]]}}
+            }
+          },
+          {
+            "expect": "Q3 is 3 [6] []: a generator is empty after its first pass",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {"type": "object", "required": ["q3"], "properties": {"q3": {"enum": [[3, [6], []]]}}}
+          },
+          {
+            "expect": "Q4: the class list holds qwen, gemma, mistral; the instance got its own copy with llama",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {
+              "type": "object",
+              "required": ["q4"],
+              "properties": {"q4": {"enum": [[["qwen", "gemma", "mistral"], ["qwen", "gemma", "llama"]]]}}
+            }
+          },
+          {
+            "expect": "Q5 is gemma too-small too-small: a return in finally wins",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {
+              "type": "object",
+              "required": ["q5"],
+              "properties": {"q5": {"enum": [["gemma", "too-small", "too-small"]]}}
+            }
+          },
+          {
+            "expect": "Q6 is ([16, 4, 1], 10, -11): floor division rounds -31/3 down to -11",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {
+              "type": "object",
+              "required": ["q6"],
+              "properties": {"q6": {"enum": [[[16, 4, 1], 10, -11], [[[16, 4, 1], 10, -11]]]}}
+            }
+          },
+          {
+            "expect": "Q7 is 65536 0.7: merge returns the same dict it was given",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {"type": "object", "required": ["q7"], "properties": {"q7": {"enum": [[65536, 0.7]]}}}
+          },
+          {
+            "expect": "Q8 is ('ornith', 103): round(102.5) is 102, so ornith's 103 wins",
+            "check": "json_schema",
+            "points": 12.5,
+            "schema": {
+              "type": "object",
+              "required": ["q8"],
+              "properties": {"q8": {"enum": [["ornith", 103], [["ornith", 103]]]}}
+            }
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "The object has exactly the keys q1 to q8",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "object",
+              "required": ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"],
+              "additionalProperties": false,
+              "properties": {"q1": {}, "q2": {}, "q3": {}, "q4": {}, "q5": {}, "q6": {}, "q7": {}, "q8": {}}
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "code_review_planted_bugs",
+      "name": "Code Reasoning: Find the Planted Bugs",
+      "description": "A 58-line Python module (VRAM scheduler, rate limiter, retry helper) with numbered lines. Five lines don't do what their docstring says; three others look wrong but are correct. The answer lists the defects by line number.",
+      "goal": "All five defects by line (percentage returned as a fraction, ascending sort where largest-first is promised, shared default list, a rate limit that lets one extra request through, backoff that skips the first delay) without flagging the three correct look-alikes; one slip is allowed.",
+      "pass": {"accuracy": 85},
+      "category": "coding",
+      "difficulty": "hard",
+      "tags": ["code-reasoning", "python", "review", "hallucination", "json"],
+      "suites": ["standard", "full"],
+      "prompt_file": "prompts/code_review_planted_bugs.md",
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Line 11: vram_pct returns a fraction (0 to 1), not the percentage its docstring promises",
+            "check": "json_schema",
+            "points": 15,
+            "schema": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "required": ["line"],
+                "properties": {"line": {"enum": [9, 10, 11, "9", "10", "11"]}}
+              }
+            }
+          },
+          {
+            "expect": "Line 17: idle_models sorts smallest first; the docstring says largest first",
+            "check": "json_schema",
+            "points": 15,
+            "schema": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "required": ["line"],
+                "properties": {"line": {"enum": [14, 15, 17, "14", "15", "17"]}}
+              }
+            }
+          },
+          {
+            "expect": "Line 20: plan=[] is one list shared by every call, so old plans leak into the 'new plan' the docstring promises",
+            "check": "json_schema",
+            "points": 15,
+            "schema": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "required": ["line"],
+                "properties": {"line": {"enum": [20, 26, "20", "26"]}}
+              }
+            }
+          },
+          {
+            "expect": "Line 49: '>' lets limit + 1 requests through; 'at most limit' needs '>='",
+            "check": "json_schema",
+            "points": 15,
+            "schema": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "required": ["line"],
+                "properties": {"line": {"enum": [49, "49"]}}
+              }
+            }
+          },
+          {
+            "expect": "Line 58: range(1, attempts) skips the first delay and returns one too few",
+            "check": "json_schema",
+            "points": 15,
+            "schema": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "required": ["line"],
+                "properties": {"line": {"enum": [56, 57, 58, "56", "57", "58"]}}
+              }
+            }
+          },
+          {
+            "expect": "Flags none of the correct look-alikes: the strict '>' on line 16, the ceiling division on line 35, and the 'is None' test on line 47",
+            "check": "json_schema",
+            "points": 15,
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "not": {
+                "contains": {
+                  "type": "object",
+                  "required": ["line"],
+                  "properties": {"line": {"enum": [16, 35, 47, "16", "35", "47"]}}
+                }
+              }
+            }
+          },
+          {
+            "expect": "Lists at most 7 findings",
+            "check": "json_schema",
+            "points": 10,
+            "schema": {"type": "array", "minItems": 1, "maxItems": 7}
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "Every finding has a line number, a problem and a fix",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["line", "problem", "fix"],
+                "properties": {
+                  "line": {"type": "integer", "minimum": 1, "maximum": 58},
+                  "problem": {"type": "string", "minLength": 1},
+                  "fix": {"type": "string", "minLength": 1}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

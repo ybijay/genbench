@@ -1,0 +1,7 @@
+| Severity | Items | Conflict | Recommendation |
+| Critical | R1, A2, C4 | R1 requires up to 8 requests processed at the same time with no queueing but A2 and C4 configure 2 parallel requests with the rest queued. | Set C4 num_parallel to 8 and update A2 to OLLAMA_NUM_PARALLEL=8 with no FIFO queueing to match R1. |
+| Major | R1, A2 | R1 requires no queueing but A2 states remaining requests wait in a FIFO queue. | Update A2 to remove FIFO queueing and process up to 8 requests concurrently per R1. |
+| Major | R2, C6 | R2 requires TTFT under 2 seconds but C6 sets ttft_slo_ms to 5000 ms. | Change C6 ttft_slo_ms to 2000 to meet the <2s TTFT requirement in R2. |
+| Critical | R3, A3, C2 | R3 and A3 require per-developer API token authentication on every request but C2 sets auth to none. | Change C2 auth from none to token and enforce per-developer API token validation as required by R3 and A3. |
+| Critical | R4, A4, C3 | R4 requires prompts and completions never leave the local network but A4 and C3 route overflow to a hosted cloud model API. | Remove C3 overflow_provider and update A4 to shed or reject excess load locally instead of sending to cloud to comply with R4. |
+| Major | R5, A5, C5 | R5 requires chat models run with context window at least 32,768 tokens but A5 and C5 set num_ctx to 16,384. | Increase C5 num_ctx to 32768 and update A5 to reflect a 32,768 token context window per R5. |

@@ -1,0 +1,3553 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "genbench test pack",
+  "$defs": {
+    "AllOf": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "all_of",
+          "title": "Check",
+          "type": "string"
+        },
+        "of": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "choice_answer": "#/$defs/ChoiceAnswer",
+                "code_ratio": "#/$defs/CodeRatio",
+                "constraint": "#/$defs/Constraint",
+                "contains": "#/$defs/Contains",
+                "detect": "#/$defs/Detect",
+                "external": "#/$defs/External",
+                "json_schema": "#/$defs/JsonSchema",
+                "json_valid": "#/$defs/JsonValid",
+                "no_table_row": "#/$defs/NoTableRow",
+                "no_tool_calls": "#/$defs/NoToolCalls",
+                "none_of": "#/$defs/NoneOf",
+                "not_contains": "#/$defs/NotContains",
+                "not_regex": "#/$defs/NotRegex",
+                "numeric_answer": "#/$defs/NumericAnswer",
+                "passed": "#/$defs/Passed",
+                "regex": "#/$defs/Regex",
+                "scaled_score": "#/$defs/ScaledScore",
+                "table_row": "#/$defs/TableRow",
+                "table_rows": "#/$defs/TableRows",
+                "tool_calls": "#/$defs/ToolCalls",
+                "validator": "#/$defs/Validator",
+                "validator_findings": "#/$defs/ValidatorFindings",
+                "word_count": "#/$defs/WordCount",
+                "yaml_valid": "#/$defs/YamlValid"
+              },
+              "propertyName": "check"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Contains"
+              },
+              {
+                "$ref": "#/$defs/NotContains"
+              },
+              {
+                "$ref": "#/$defs/Regex"
+              },
+              {
+                "$ref": "#/$defs/NotRegex"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              },
+              {
+                "$ref": "#/$defs/NoneOf"
+              },
+              {
+                "$ref": "#/$defs/Passed"
+              },
+              {
+                "$ref": "#/$defs/WordCount"
+              },
+              {
+                "$ref": "#/$defs/CodeRatio"
+              },
+              {
+                "$ref": "#/$defs/Detect"
+              },
+              {
+                "$ref": "#/$defs/JsonValid"
+              },
+              {
+                "$ref": "#/$defs/JsonSchema"
+              },
+              {
+                "$ref": "#/$defs/YamlValid"
+              },
+              {
+                "$ref": "#/$defs/ToolCalls"
+              },
+              {
+                "$ref": "#/$defs/NumericAnswer"
+              },
+              {
+                "$ref": "#/$defs/ChoiceAnswer"
+              },
+              {
+                "$ref": "#/$defs/Constraint"
+              },
+              {
+                "$ref": "#/$defs/Validator"
+              },
+              {
+                "$ref": "#/$defs/ValidatorFindings"
+              },
+              {
+                "$ref": "#/$defs/External"
+              },
+              {
+                "$ref": "#/$defs/ScaledScore"
+              },
+              {
+                "$ref": "#/$defs/NoToolCalls"
+              },
+              {
+                "$ref": "#/$defs/TableRow"
+              },
+              {
+                "$ref": "#/$defs/NoTableRow"
+              },
+              {
+                "$ref": "#/$defs/TableRows"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Of",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "of"
+      ],
+      "title": "AllOf",
+      "type": "object"
+    },
+    "AnyOf": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "any_of",
+          "title": "Check",
+          "type": "string"
+        },
+        "of": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "choice_answer": "#/$defs/ChoiceAnswer",
+                "code_ratio": "#/$defs/CodeRatio",
+                "constraint": "#/$defs/Constraint",
+                "contains": "#/$defs/Contains",
+                "detect": "#/$defs/Detect",
+                "external": "#/$defs/External",
+                "json_schema": "#/$defs/JsonSchema",
+                "json_valid": "#/$defs/JsonValid",
+                "no_table_row": "#/$defs/NoTableRow",
+                "no_tool_calls": "#/$defs/NoToolCalls",
+                "none_of": "#/$defs/NoneOf",
+                "not_contains": "#/$defs/NotContains",
+                "not_regex": "#/$defs/NotRegex",
+                "numeric_answer": "#/$defs/NumericAnswer",
+                "passed": "#/$defs/Passed",
+                "regex": "#/$defs/Regex",
+                "scaled_score": "#/$defs/ScaledScore",
+                "table_row": "#/$defs/TableRow",
+                "table_rows": "#/$defs/TableRows",
+                "tool_calls": "#/$defs/ToolCalls",
+                "validator": "#/$defs/Validator",
+                "validator_findings": "#/$defs/ValidatorFindings",
+                "word_count": "#/$defs/WordCount",
+                "yaml_valid": "#/$defs/YamlValid"
+              },
+              "propertyName": "check"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Contains"
+              },
+              {
+                "$ref": "#/$defs/NotContains"
+              },
+              {
+                "$ref": "#/$defs/Regex"
+              },
+              {
+                "$ref": "#/$defs/NotRegex"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              },
+              {
+                "$ref": "#/$defs/NoneOf"
+              },
+              {
+                "$ref": "#/$defs/Passed"
+              },
+              {
+                "$ref": "#/$defs/WordCount"
+              },
+              {
+                "$ref": "#/$defs/CodeRatio"
+              },
+              {
+                "$ref": "#/$defs/Detect"
+              },
+              {
+                "$ref": "#/$defs/JsonValid"
+              },
+              {
+                "$ref": "#/$defs/JsonSchema"
+              },
+              {
+                "$ref": "#/$defs/YamlValid"
+              },
+              {
+                "$ref": "#/$defs/ToolCalls"
+              },
+              {
+                "$ref": "#/$defs/NumericAnswer"
+              },
+              {
+                "$ref": "#/$defs/ChoiceAnswer"
+              },
+              {
+                "$ref": "#/$defs/Constraint"
+              },
+              {
+                "$ref": "#/$defs/Validator"
+              },
+              {
+                "$ref": "#/$defs/ValidatorFindings"
+              },
+              {
+                "$ref": "#/$defs/External"
+              },
+              {
+                "$ref": "#/$defs/ScaledScore"
+              },
+              {
+                "$ref": "#/$defs/NoToolCalls"
+              },
+              {
+                "$ref": "#/$defs/TableRow"
+              },
+              {
+                "$ref": "#/$defs/NoTableRow"
+              },
+              {
+                "$ref": "#/$defs/TableRows"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Of",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "of"
+      ],
+      "title": "AnyOf",
+      "type": "object"
+    },
+    "BenchTest": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "description": "What the model is asked to do",
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "goal": {
+          "description": "What a passing answer looks like",
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "pass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PassMark"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pass mark; omit to use [scoring].pass_mark, null for measured-only tests"
+        },
+        "category": {
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "title": "Category",
+          "type": "string"
+        },
+        "difficulty": {
+          "default": "medium",
+          "enum": [
+            "easy",
+            "medium",
+            "hard",
+            "expert"
+          ],
+          "title": "Difficulty",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "suites": {
+          "items": {
+            "enum": [
+              "quick",
+              "standard",
+              "full",
+              "perf"
+            ],
+            "type": "string"
+          },
+          "title": "Suites",
+          "type": "array"
+        },
+        "aliases": {
+          "description": "Other names, e.g. the task name in old result files",
+          "items": {
+            "type": "string"
+          },
+          "title": "Aliases",
+          "type": "array"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The prompt; a list of strings is joined with newlines",
+          "title": "Prompt"
+        },
+        "prompt_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Prompt file, relative to the pack folder",
+          "title": "Prompt File"
+        },
+        "messages": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Message"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Messages"
+        },
+        "system": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "System"
+        },
+        "vars": {
+          "additionalProperties": true,
+          "title": "Vars",
+          "type": "object"
+        },
+        "context": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GatewayLogs"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Generated text that replaces {{context}} in the prompt"
+        },
+        "tools": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tools"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "const": "json",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Format"
+        },
+        "options": {
+          "additionalProperties": true,
+          "title": "Options",
+          "type": "object"
+        },
+        "timeout_s": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timeout S"
+        },
+        "repeats": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repeats"
+        },
+        "extract": {
+          "$ref": "#/$defs/Extract"
+        },
+        "rubric": {
+          "$ref": "#/$defs/Rubric"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "goal",
+        "category",
+        "rubric"
+      ],
+      "title": "BenchTest",
+      "type": "object"
+    },
+    "ChoiceAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "choice_answer",
+          "title": "Check",
+          "type": "string"
+        },
+        "expected": {
+          "minLength": 1,
+          "title": "Expected",
+          "type": "string"
+        },
+        "pattern": {
+          "default": "ANSWER:\\s*([A-Za-z0-9]+)",
+          "title": "Pattern",
+          "type": "string"
+        },
+        "case_sensitive": {
+          "default": false,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "check",
+        "expected"
+      ],
+      "title": "ChoiceAnswer",
+      "type": "object"
+    },
+    "CodeRatio": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "code_ratio",
+          "title": "Check",
+          "type": "string"
+        },
+        "scale": {
+          "description": "points = min(max_points, ratio * scale); ratio = extracted / response length",
+          "exclusiveMinimum": 0,
+          "title": "Scale",
+          "type": "number"
+        },
+        "max_points": {
+          "exclusiveMinimum": 0,
+          "title": "Max Points",
+          "type": "number"
+        }
+      },
+      "required": [
+        "check",
+        "scale",
+        "max_points"
+      ],
+      "title": "CodeRatio",
+      "type": "object"
+    },
+    "Constraint": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "constraint",
+          "title": "Check",
+          "type": "string"
+        },
+        "min_words": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Words"
+        },
+        "max_words": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Words"
+        },
+        "bullet_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bullet Count"
+        },
+        "max_words_per_bullet": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Words Per Bullet"
+        },
+        "banned_words": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Banned Words",
+          "type": "array"
+        },
+        "must_end_with": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Must End With"
+        }
+      },
+      "required": [
+        "check"
+      ],
+      "title": "Constraint",
+      "type": "object"
+    },
+    "Contains": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "contains",
+          "title": "Check",
+          "type": "string"
+        },
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        },
+        "case_sensitive": {
+          "default": true,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "check",
+        "value"
+      ],
+      "title": "Contains",
+      "type": "object"
+    },
+    "Detect": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "detect",
+          "title": "Check",
+          "type": "string"
+        },
+        "what": {
+          "enum": [
+            "markdown_table",
+            "ascii_diagram",
+            "shebang",
+            "fenced_block"
+          ],
+          "title": "What",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check",
+        "what"
+      ],
+      "title": "Detect",
+      "type": "object"
+    },
+    "ExpectedCall": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "args": {
+          "additionalProperties": true,
+          "description": "Arguments that must match exactly; others are ignored",
+          "title": "Args",
+          "type": "object"
+        },
+        "points": {
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "points"
+      ],
+      "title": "ExpectedCall",
+      "type": "object"
+    },
+    "External": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "external",
+          "title": "Check",
+          "type": "string"
+        },
+        "cmd": {
+          "description": "Command; it reads a JSON request on stdin and prints {score, notes}",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Cmd",
+          "type": "array"
+        },
+        "timeout_s": {
+          "default": 30,
+          "exclusiveMinimum": 0,
+          "title": "Timeout S",
+          "type": "number"
+        },
+        "max_points": {
+          "exclusiveMinimum": 0,
+          "title": "Max Points",
+          "type": "number"
+        }
+      },
+      "required": [
+        "check",
+        "cmd",
+        "max_points"
+      ],
+      "title": "External",
+      "type": "object"
+    },
+    "Extract": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "default": "whole",
+          "enum": [
+            "code_block",
+            "json_block",
+            "final_answer",
+            "tool_calls",
+            "whole"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "langs": {
+          "description": "Fence languages to look for first, e.g. ['python', 'py']",
+          "items": {
+            "type": "string"
+          },
+          "title": "Langs",
+          "type": "array"
+        },
+        "fallback_langs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fence languages to try when none of 'langs' match; '' means an untagged fence",
+          "title": "Fallback Langs"
+        },
+        "pick": {
+          "default": "longest",
+          "enum": [
+            "longest",
+            "first",
+            "last"
+          ],
+          "title": "Pick",
+          "type": "string"
+        },
+        "on_no_block": {
+          "default": "whole_response",
+          "enum": [
+            "whole_response",
+            "fail"
+          ],
+          "title": "On No Block",
+          "type": "string"
+        },
+        "save_as": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "File name in the run folder",
+          "title": "Save As"
+        },
+        "strip_thinking": {
+          "default": true,
+          "title": "Strip Thinking",
+          "type": "boolean"
+        }
+      },
+      "title": "Extract",
+      "type": "object"
+    },
+    "ForbiddenCall": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "args": {
+          "additionalProperties": true,
+          "description": "Arguments that must all match; {} matches any call to the tool",
+          "title": "Args",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ForbiddenCall",
+      "type": "object"
+    },
+    "GatewayLogs": {
+      "additionalProperties": false,
+      "description": "An inference-gateway log: requests, scheduler and health lines, with planted lines at chosen depths.",
+      "properties": {
+        "generator": {
+          "default": "gateway_logs",
+          "pattern": "^gateway_logs$",
+          "title": "Generator",
+          "type": "string"
+        },
+        "approx_tokens": {
+          "description": "Target size in tokens, by estimate_tokens",
+          "maximum": 500000,
+          "minimum": 500,
+          "title": "Approx Tokens",
+          "type": "integer"
+        },
+        "seed": {
+          "description": "Same seed, same log",
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "start": {
+          "default": "2026-11-03 09:00:00",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
+          "title": "Start",
+          "type": "string"
+        },
+        "plants": {
+          "items": {
+            "$ref": "#/$defs/Plant"
+          },
+          "title": "Plants",
+          "type": "array"
+        },
+        "reserved": {
+          "description": "Text that may appear only in planted lines (checked every time)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Reserved",
+          "type": "array"
+        }
+      },
+      "required": [
+        "approx_tokens",
+        "seed"
+      ],
+      "title": "GatewayLogs",
+      "type": "object"
+    },
+    "JsonSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "json_schema",
+          "title": "Check",
+          "type": "string"
+        },
+        "schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Schema"
+        },
+        "schema_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Schema File"
+        }
+      },
+      "required": [
+        "check"
+      ],
+      "title": "JsonSchema",
+      "type": "object"
+    },
+    "JsonValid": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "json_valid",
+          "title": "Check",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check"
+      ],
+      "title": "JsonValid",
+      "type": "object"
+    },
+    "Message": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "default": "",
+          "title": "Content",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "tool_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Calls"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "Message",
+      "type": "object"
+    },
+    "NoTableRow": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "no_table_row",
+          "title": "Check",
+          "type": "string"
+        },
+        "match": {
+          "description": "Regexes (case-insensitive); no table row may match all. Fails when there is no table",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Match",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "match"
+      ],
+      "title": "NoTableRow",
+      "type": "object"
+    },
+    "NoToolCalls": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "no_tool_calls",
+          "title": "Check",
+          "type": "string"
+        },
+        "source": {
+          "default": "json_in_text",
+          "enum": [
+            "json_in_text",
+            "native"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "calls": {
+          "description": "Calls that must not appear. Fails too when no tool-call list is found at all",
+          "items": {
+            "$ref": "#/$defs/ForbiddenCall"
+          },
+          "minItems": 1,
+          "title": "Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "calls"
+      ],
+      "title": "NoToolCalls",
+      "type": "object"
+    },
+    "NoneOf": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "none_of",
+          "title": "Check",
+          "type": "string"
+        },
+        "of": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "choice_answer": "#/$defs/ChoiceAnswer",
+                "code_ratio": "#/$defs/CodeRatio",
+                "constraint": "#/$defs/Constraint",
+                "contains": "#/$defs/Contains",
+                "detect": "#/$defs/Detect",
+                "external": "#/$defs/External",
+                "json_schema": "#/$defs/JsonSchema",
+                "json_valid": "#/$defs/JsonValid",
+                "no_table_row": "#/$defs/NoTableRow",
+                "no_tool_calls": "#/$defs/NoToolCalls",
+                "none_of": "#/$defs/NoneOf",
+                "not_contains": "#/$defs/NotContains",
+                "not_regex": "#/$defs/NotRegex",
+                "numeric_answer": "#/$defs/NumericAnswer",
+                "passed": "#/$defs/Passed",
+                "regex": "#/$defs/Regex",
+                "scaled_score": "#/$defs/ScaledScore",
+                "table_row": "#/$defs/TableRow",
+                "table_rows": "#/$defs/TableRows",
+                "tool_calls": "#/$defs/ToolCalls",
+                "validator": "#/$defs/Validator",
+                "validator_findings": "#/$defs/ValidatorFindings",
+                "word_count": "#/$defs/WordCount",
+                "yaml_valid": "#/$defs/YamlValid"
+              },
+              "propertyName": "check"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Contains"
+              },
+              {
+                "$ref": "#/$defs/NotContains"
+              },
+              {
+                "$ref": "#/$defs/Regex"
+              },
+              {
+                "$ref": "#/$defs/NotRegex"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              },
+              {
+                "$ref": "#/$defs/NoneOf"
+              },
+              {
+                "$ref": "#/$defs/Passed"
+              },
+              {
+                "$ref": "#/$defs/WordCount"
+              },
+              {
+                "$ref": "#/$defs/CodeRatio"
+              },
+              {
+                "$ref": "#/$defs/Detect"
+              },
+              {
+                "$ref": "#/$defs/JsonValid"
+              },
+              {
+                "$ref": "#/$defs/JsonSchema"
+              },
+              {
+                "$ref": "#/$defs/YamlValid"
+              },
+              {
+                "$ref": "#/$defs/ToolCalls"
+              },
+              {
+                "$ref": "#/$defs/NumericAnswer"
+              },
+              {
+                "$ref": "#/$defs/ChoiceAnswer"
+              },
+              {
+                "$ref": "#/$defs/Constraint"
+              },
+              {
+                "$ref": "#/$defs/Validator"
+              },
+              {
+                "$ref": "#/$defs/ValidatorFindings"
+              },
+              {
+                "$ref": "#/$defs/External"
+              },
+              {
+                "$ref": "#/$defs/ScaledScore"
+              },
+              {
+                "$ref": "#/$defs/NoToolCalls"
+              },
+              {
+                "$ref": "#/$defs/TableRow"
+              },
+              {
+                "$ref": "#/$defs/NoTableRow"
+              },
+              {
+                "$ref": "#/$defs/TableRows"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Of",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "of"
+      ],
+      "title": "NoneOf",
+      "type": "object"
+    },
+    "NotContains": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "not_contains",
+          "title": "Check",
+          "type": "string"
+        },
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        },
+        "case_sensitive": {
+          "default": true,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "check",
+        "value"
+      ],
+      "title": "NotContains",
+      "type": "object"
+    },
+    "NotRegex": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "not_regex",
+          "title": "Check",
+          "type": "string"
+        },
+        "pattern": {
+          "minLength": 1,
+          "title": "Pattern",
+          "type": "string"
+        },
+        "flags": {
+          "default": "",
+          "pattern": "^[imsx]*$",
+          "title": "Flags",
+          "type": "string"
+        },
+        "engine": {
+          "default": "re",
+          "enum": [
+            "re",
+            "regex"
+          ],
+          "title": "Engine",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check",
+        "pattern"
+      ],
+      "title": "NotRegex",
+      "type": "object"
+    },
+    "NumericAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "numeric_answer",
+          "title": "Check",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected",
+          "type": "number"
+        },
+        "tolerance": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Tolerance",
+          "type": "number"
+        },
+        "relative": {
+          "default": false,
+          "title": "Relative",
+          "type": "boolean"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regex whose first group captures the number; default: the last number",
+          "title": "Pattern"
+        }
+      },
+      "required": [
+        "check",
+        "expected"
+      ],
+      "title": "NumericAnswer",
+      "type": "object"
+    },
+    "PassMark": {
+      "additionalProperties": false,
+      "description": "Scores a test must reach to count as passed. Every mark that is set must hold.",
+      "properties": {
+        "accuracy": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accuracy"
+        },
+        "quality": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality"
+        }
+      },
+      "title": "PassMark",
+      "type": "object"
+    },
+    "Passed": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "passed",
+          "title": "Check",
+          "type": "string"
+        },
+        "ref": {
+          "description": "id of an earlier check",
+          "minLength": 1,
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check",
+        "ref"
+      ],
+      "title": "Passed",
+      "type": "object"
+    },
+    "Plant": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "description": "Where the line goes, as a fraction of the log: 0 first, 1 last",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "At",
+          "type": "number"
+        },
+        "line": {
+          "description": "The line to insert; {time} becomes the timestamp at that point",
+          "minLength": 1,
+          "title": "Line",
+          "type": "string"
+        }
+      },
+      "required": [
+        "at",
+        "line"
+      ],
+      "title": "Plant",
+      "type": "object"
+    },
+    "Regex": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "regex",
+          "title": "Check",
+          "type": "string"
+        },
+        "pattern": {
+          "minLength": 1,
+          "title": "Pattern",
+          "type": "string"
+        },
+        "flags": {
+          "default": "",
+          "description": "i ignore case, m multiline, s dot matches newline, x verbose",
+          "pattern": "^[imsx]*$",
+          "title": "Flags",
+          "type": "string"
+        },
+        "min_matches": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Min Matches",
+          "type": "integer"
+        },
+        "engine": {
+          "default": "re",
+          "enum": [
+            "re",
+            "regex"
+          ],
+          "title": "Engine",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check",
+        "pattern"
+      ],
+      "title": "Regex",
+      "type": "object"
+    },
+    "Rubric": {
+      "additionalProperties": false,
+      "properties": {
+        "accuracy": {
+          "description": "Did the answer do what was asked?",
+          "items": {
+            "allOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "all_of": "#/$defs/AllOf",
+                    "any_of": "#/$defs/AnyOf",
+                    "choice_answer": "#/$defs/ChoiceAnswer",
+                    "code_ratio": "#/$defs/CodeRatio",
+                    "constraint": "#/$defs/Constraint",
+                    "contains": "#/$defs/Contains",
+                    "detect": "#/$defs/Detect",
+                    "external": "#/$defs/External",
+                    "json_schema": "#/$defs/JsonSchema",
+                    "json_valid": "#/$defs/JsonValid",
+                    "no_table_row": "#/$defs/NoTableRow",
+                    "no_tool_calls": "#/$defs/NoToolCalls",
+                    "none_of": "#/$defs/NoneOf",
+                    "not_contains": "#/$defs/NotContains",
+                    "not_regex": "#/$defs/NotRegex",
+                    "numeric_answer": "#/$defs/NumericAnswer",
+                    "passed": "#/$defs/Passed",
+                    "regex": "#/$defs/Regex",
+                    "scaled_score": "#/$defs/ScaledScore",
+                    "table_row": "#/$defs/TableRow",
+                    "table_rows": "#/$defs/TableRows",
+                    "tool_calls": "#/$defs/ToolCalls",
+                    "validator": "#/$defs/Validator",
+                    "validator_findings": "#/$defs/ValidatorFindings",
+                    "word_count": "#/$defs/WordCount",
+                    "yaml_valid": "#/$defs/YamlValid"
+                  },
+                  "propertyName": "check"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/Contains"
+                  },
+                  {
+                    "$ref": "#/$defs/NotContains"
+                  },
+                  {
+                    "$ref": "#/$defs/Regex"
+                  },
+                  {
+                    "$ref": "#/$defs/NotRegex"
+                  },
+                  {
+                    "$ref": "#/$defs/AllOf"
+                  },
+                  {
+                    "$ref": "#/$defs/AnyOf"
+                  },
+                  {
+                    "$ref": "#/$defs/NoneOf"
+                  },
+                  {
+                    "$ref": "#/$defs/Passed"
+                  },
+                  {
+                    "$ref": "#/$defs/WordCount"
+                  },
+                  {
+                    "$ref": "#/$defs/CodeRatio"
+                  },
+                  {
+                    "$ref": "#/$defs/Detect"
+                  },
+                  {
+                    "$ref": "#/$defs/JsonValid"
+                  },
+                  {
+                    "$ref": "#/$defs/JsonSchema"
+                  },
+                  {
+                    "$ref": "#/$defs/YamlValid"
+                  },
+                  {
+                    "$ref": "#/$defs/ToolCalls"
+                  },
+                  {
+                    "$ref": "#/$defs/NumericAnswer"
+                  },
+                  {
+                    "$ref": "#/$defs/ChoiceAnswer"
+                  },
+                  {
+                    "$ref": "#/$defs/Constraint"
+                  },
+                  {
+                    "$ref": "#/$defs/Validator"
+                  },
+                  {
+                    "$ref": "#/$defs/ValidatorFindings"
+                  },
+                  {
+                    "$ref": "#/$defs/External"
+                  },
+                  {
+                    "$ref": "#/$defs/ScaledScore"
+                  },
+                  {
+                    "$ref": "#/$defs/NoToolCalls"
+                  },
+                  {
+                    "$ref": "#/$defs/TableRow"
+                  },
+                  {
+                    "$ref": "#/$defs/NoTableRow"
+                  },
+                  {
+                    "$ref": "#/$defs/TableRows"
+                  }
+                ]
+              }
+            ],
+            "required": [
+              "expect"
+            ]
+          },
+          "minItems": 1,
+          "title": "Accuracy",
+          "type": "array"
+        },
+        "quality": {
+          "anyOf": [
+            {
+              "items": {
+                "allOf": [
+                  {
+                    "discriminator": {
+                      "mapping": {
+                        "all_of": "#/$defs/AllOf",
+                        "any_of": "#/$defs/AnyOf",
+                        "choice_answer": "#/$defs/ChoiceAnswer",
+                        "code_ratio": "#/$defs/CodeRatio",
+                        "constraint": "#/$defs/Constraint",
+                        "contains": "#/$defs/Contains",
+                        "detect": "#/$defs/Detect",
+                        "external": "#/$defs/External",
+                        "json_schema": "#/$defs/JsonSchema",
+                        "json_valid": "#/$defs/JsonValid",
+                        "no_table_row": "#/$defs/NoTableRow",
+                        "no_tool_calls": "#/$defs/NoToolCalls",
+                        "none_of": "#/$defs/NoneOf",
+                        "not_contains": "#/$defs/NotContains",
+                        "not_regex": "#/$defs/NotRegex",
+                        "numeric_answer": "#/$defs/NumericAnswer",
+                        "passed": "#/$defs/Passed",
+                        "regex": "#/$defs/Regex",
+                        "scaled_score": "#/$defs/ScaledScore",
+                        "table_row": "#/$defs/TableRow",
+                        "table_rows": "#/$defs/TableRows",
+                        "tool_calls": "#/$defs/ToolCalls",
+                        "validator": "#/$defs/Validator",
+                        "validator_findings": "#/$defs/ValidatorFindings",
+                        "word_count": "#/$defs/WordCount",
+                        "yaml_valid": "#/$defs/YamlValid"
+                      },
+                      "propertyName": "check"
+                    },
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/Contains"
+                      },
+                      {
+                        "$ref": "#/$defs/NotContains"
+                      },
+                      {
+                        "$ref": "#/$defs/Regex"
+                      },
+                      {
+                        "$ref": "#/$defs/NotRegex"
+                      },
+                      {
+                        "$ref": "#/$defs/AllOf"
+                      },
+                      {
+                        "$ref": "#/$defs/AnyOf"
+                      },
+                      {
+                        "$ref": "#/$defs/NoneOf"
+                      },
+                      {
+                        "$ref": "#/$defs/Passed"
+                      },
+                      {
+                        "$ref": "#/$defs/WordCount"
+                      },
+                      {
+                        "$ref": "#/$defs/CodeRatio"
+                      },
+                      {
+                        "$ref": "#/$defs/Detect"
+                      },
+                      {
+                        "$ref": "#/$defs/JsonValid"
+                      },
+                      {
+                        "$ref": "#/$defs/JsonSchema"
+                      },
+                      {
+                        "$ref": "#/$defs/YamlValid"
+                      },
+                      {
+                        "$ref": "#/$defs/ToolCalls"
+                      },
+                      {
+                        "$ref": "#/$defs/NumericAnswer"
+                      },
+                      {
+                        "$ref": "#/$defs/ChoiceAnswer"
+                      },
+                      {
+                        "$ref": "#/$defs/Constraint"
+                      },
+                      {
+                        "$ref": "#/$defs/Validator"
+                      },
+                      {
+                        "$ref": "#/$defs/ValidatorFindings"
+                      },
+                      {
+                        "$ref": "#/$defs/External"
+                      },
+                      {
+                        "$ref": "#/$defs/ScaledScore"
+                      },
+                      {
+                        "$ref": "#/$defs/NoToolCalls"
+                      },
+                      {
+                        "$ref": "#/$defs/TableRow"
+                      },
+                      {
+                        "$ref": "#/$defs/NoTableRow"
+                      },
+                      {
+                        "$ref": "#/$defs/TableRows"
+                      }
+                    ]
+                  }
+                ],
+                "required": [
+                  "expect"
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "const": "same_as_accuracy",
+              "type": "string"
+            }
+          ],
+          "default": "same_as_accuracy",
+          "description": "How well it was done (format, polish, depth)",
+          "title": "Quality"
+        },
+        "category_score": {
+          "default": "mean",
+          "description": "What this test adds to its category column: the average of accuracy and quality (mean), or one of them alone. The core pack uses 'quality', as the original script did",
+          "enum": [
+            "mean",
+            "quality",
+            "accuracy"
+          ],
+          "title": "Category Score",
+          "type": "string"
+        }
+      },
+      "required": [
+        "accuracy"
+      ],
+      "title": "Rubric",
+      "type": "object"
+    },
+    "ScaledScore": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "scaled_score",
+          "title": "Check",
+          "type": "string"
+        },
+        "of_rubric": {
+          "const": "accuracy",
+          "default": "accuracy",
+          "title": "Of Rubric",
+          "type": "string"
+        },
+        "factor": {
+          "exclusiveMinimum": 0,
+          "title": "Factor",
+          "type": "number"
+        },
+        "max_points": {
+          "exclusiveMinimum": 0,
+          "title": "Max Points",
+          "type": "number"
+        }
+      },
+      "required": [
+        "check",
+        "factor",
+        "max_points"
+      ],
+      "title": "ScaledScore",
+      "type": "object"
+    },
+    "TableRow": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "table_row",
+          "title": "Check",
+          "type": "string"
+        },
+        "match": {
+          "description": "Regexes (case-insensitive); some markdown table row must match all",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Match",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "match"
+      ],
+      "title": "TableRow",
+      "type": "object"
+    },
+    "TableRows": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "table_rows",
+          "title": "Check",
+          "type": "string"
+        },
+        "min_rows": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Min Rows",
+          "type": "integer"
+        },
+        "max_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Rows"
+        },
+        "all_match": {
+          "description": "Regexes (case-insensitive) every row must match",
+          "items": {
+            "type": "string"
+          },
+          "title": "All Match",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check"
+      ],
+      "title": "TableRows",
+      "type": "object"
+    },
+    "ToolCalls": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "tool_calls",
+          "title": "Check",
+          "type": "string"
+        },
+        "source": {
+          "default": "json_in_text",
+          "enum": [
+            "json_in_text",
+            "native"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/ExpectedCall"
+          },
+          "minItems": 1,
+          "title": "Calls",
+          "type": "array"
+        },
+        "max_points": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Points"
+        },
+        "count_duplicates": {
+          "default": true,
+          "title": "Count Duplicates",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "check",
+        "calls"
+      ],
+      "title": "ToolCalls",
+      "type": "object"
+    },
+    "Validator": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "validator",
+          "title": "Check",
+          "type": "string"
+        },
+        "tool": {
+          "description": "A tool from [validators] in genbench.toml",
+          "minLength": 1,
+          "title": "Tool",
+          "type": "string"
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "all_of": "#/$defs/AllOf",
+                  "any_of": "#/$defs/AnyOf",
+                  "choice_answer": "#/$defs/ChoiceAnswer",
+                  "code_ratio": "#/$defs/CodeRatio",
+                  "constraint": "#/$defs/Constraint",
+                  "contains": "#/$defs/Contains",
+                  "detect": "#/$defs/Detect",
+                  "external": "#/$defs/External",
+                  "json_schema": "#/$defs/JsonSchema",
+                  "json_valid": "#/$defs/JsonValid",
+                  "no_table_row": "#/$defs/NoTableRow",
+                  "no_tool_calls": "#/$defs/NoToolCalls",
+                  "none_of": "#/$defs/NoneOf",
+                  "not_contains": "#/$defs/NotContains",
+                  "not_regex": "#/$defs/NotRegex",
+                  "numeric_answer": "#/$defs/NumericAnswer",
+                  "passed": "#/$defs/Passed",
+                  "regex": "#/$defs/Regex",
+                  "scaled_score": "#/$defs/ScaledScore",
+                  "table_row": "#/$defs/TableRow",
+                  "table_rows": "#/$defs/TableRows",
+                  "tool_calls": "#/$defs/ToolCalls",
+                  "validator": "#/$defs/Validator",
+                  "validator_findings": "#/$defs/ValidatorFindings",
+                  "word_count": "#/$defs/WordCount",
+                  "yaml_valid": "#/$defs/YamlValid"
+                },
+                "propertyName": "check"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/Contains"
+                },
+                {
+                  "$ref": "#/$defs/NotContains"
+                },
+                {
+                  "$ref": "#/$defs/Regex"
+                },
+                {
+                  "$ref": "#/$defs/NotRegex"
+                },
+                {
+                  "$ref": "#/$defs/AllOf"
+                },
+                {
+                  "$ref": "#/$defs/AnyOf"
+                },
+                {
+                  "$ref": "#/$defs/NoneOf"
+                },
+                {
+                  "$ref": "#/$defs/Passed"
+                },
+                {
+                  "$ref": "#/$defs/WordCount"
+                },
+                {
+                  "$ref": "#/$defs/CodeRatio"
+                },
+                {
+                  "$ref": "#/$defs/Detect"
+                },
+                {
+                  "$ref": "#/$defs/JsonValid"
+                },
+                {
+                  "$ref": "#/$defs/JsonSchema"
+                },
+                {
+                  "$ref": "#/$defs/YamlValid"
+                },
+                {
+                  "$ref": "#/$defs/ToolCalls"
+                },
+                {
+                  "$ref": "#/$defs/NumericAnswer"
+                },
+                {
+                  "$ref": "#/$defs/ChoiceAnswer"
+                },
+                {
+                  "$ref": "#/$defs/Constraint"
+                },
+                {
+                  "$ref": "#/$defs/Validator"
+                },
+                {
+                  "$ref": "#/$defs/ValidatorFindings"
+                },
+                {
+                  "$ref": "#/$defs/External"
+                },
+                {
+                  "$ref": "#/$defs/ScaledScore"
+                },
+                {
+                  "$ref": "#/$defs/NoToolCalls"
+                },
+                {
+                  "$ref": "#/$defs/TableRow"
+                },
+                {
+                  "$ref": "#/$defs/NoTableRow"
+                },
+                {
+                  "$ref": "#/$defs/TableRows"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Used when the tool isn't available: passing earns this check's points, failing earns the fallback's fail_points",
+          "title": "Fallback"
+        }
+      },
+      "required": [
+        "check",
+        "tool"
+      ],
+      "title": "Validator",
+      "type": "object"
+    },
+    "ValidatorFindings": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "validator_findings",
+          "title": "Check",
+          "type": "string"
+        },
+        "tool": {
+          "minLength": 1,
+          "title": "Tool",
+          "type": "string"
+        },
+        "max_points": {
+          "exclusiveMinimum": 0,
+          "title": "Max Points",
+          "type": "number"
+        },
+        "penalty_per_finding": {
+          "exclusiveMinimum": 0,
+          "title": "Penalty Per Finding",
+          "type": "number"
+        }
+      },
+      "required": [
+        "check",
+        "tool",
+        "max_points",
+        "penalty_per_finding"
+      ],
+      "title": "ValidatorFindings",
+      "type": "object"
+    },
+    "WordCount": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "word_count",
+          "title": "Check",
+          "type": "string"
+        },
+        "tiers": {
+          "description": "The highest tier reached wins",
+          "items": {
+            "$ref": "#/$defs/WordTier"
+          },
+          "minItems": 1,
+          "title": "Tiers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check",
+        "tiers"
+      ],
+      "title": "WordCount",
+      "type": "object"
+    },
+    "WordTier": {
+      "additionalProperties": false,
+      "properties": {
+        "min_words": {
+          "minimum": 0,
+          "title": "Min Words",
+          "type": "integer"
+        },
+        "points": {
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        }
+      },
+      "required": [
+        "min_words",
+        "points"
+      ],
+      "title": "WordTier",
+      "type": "object"
+    },
+    "YamlValid": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name for 'passed' checks to refer to",
+          "title": "Id"
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Plain-English expectation shown as met or missed; required on top-level checks",
+          "title": "Expect"
+        },
+        "points": {
+          "default": 0,
+          "description": "Points when the check passes",
+          "minimum": 0,
+          "title": "Points",
+          "type": "number"
+        },
+        "fail_points": {
+          "default": 0,
+          "description": "Points when the check fails (default 0)",
+          "minimum": 0,
+          "title": "Fail Points",
+          "type": "number"
+        },
+        "on": {
+          "default": "extracted",
+          "description": "What the check reads: the extracted artifact, the whole response, or the thinking text",
+          "enum": [
+            "extracted",
+            "response",
+            "thinking"
+          ],
+          "title": "On",
+          "type": "string"
+        },
+        "check": {
+          "const": "yaml_valid",
+          "title": "Check",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check"
+      ],
+      "title": "YamlValid",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "$Schema"
+    },
+    "pack": {
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "title": "Pack",
+      "type": "string"
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Version",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "tests": {
+      "items": {
+        "$ref": "#/$defs/BenchTest"
+      },
+      "minItems": 1,
+      "title": "Tests",
+      "type": "array"
+    }
+  },
+  "required": [
+    "pack",
+    "version",
+    "tests"
+  ],
+  "type": "object"
+}

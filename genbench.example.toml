@@ -1,0 +1,27 @@
+# Example genbench configuration. Copy it to genbench.toml and edit; every line is optional.
+#
+# You may not need a config at all: with none, genbench talks to Ollama on this machine
+# (or $OLLAMA_HOST) and 'genbench run' offers the models installed there.
+
+# The models to benchmark. Leave this out to be offered the installed ones.
+models = ["llama3.2:3b", "qwen3:8b"]
+
+# One model with settings of its own goes in as a block instead of a name:
+# models = ["llama3.2:3b", { name = "qwen3:8b", options = { num_ctx = 16384 } }]
+
+# To compare one model with its thinking switched off or lowered, list it once per setting:
+# models = ["qwen3:8b", { name = "qwen3:8b", thinking = "off" }, { name = "qwen3:8b", thinking = "low" }]
+
+# Ollama on another machine. Leave this out when it runs on this one.
+# [[endpoints]]
+# name = "gpu-box"
+# url = "http://gpu-box:11434"
+
+# The name used in run folders, and the leaderboard's title.
+# [run]
+# name = "my-gpu"
+#
+# [report]
+# title = "Local Benchmark Leaderboard (my GPU)"
+
+# 'genbench init --full' writes a file with every section and its default.

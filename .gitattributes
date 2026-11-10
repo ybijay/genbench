@@ -1,0 +1,2 @@
+# Keep Unix line endings on every machine, so the same files run on Windows and Linux.
+* text=auto eol=lf

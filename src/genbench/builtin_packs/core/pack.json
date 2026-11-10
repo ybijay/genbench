@@ -1,0 +1,361 @@
+{
+  "$schema": "../../schemas/testpack.schema.json",
+  "pack": "core",
+  "version": "1.0.0",
+  "description": "The 4 original GenBenchMark tasks, ported from ollama_local_benchmark.py with the same points.",
+  "tests": [
+    {
+      "id": "python_streamlit_job_parser",
+      "name": "Python Coding: Streamlit HTML Job Parser",
+      "description": "Asks for a single-file Streamlit app where the user pastes raw HTML; BeautifulSoup extracts job titles and company names, shown in a sortable dataframe, with error handling and a clear button.",
+      "goal": "Valid Python using Streamlit and BeautifulSoup, with a text area for the HTML and results in a dataframe, that handles malformed HTML, has a clear button and uses no custom CSS.",
+      "category": "coding",
+      "difficulty": "medium",
+      "tags": ["python", "streamlit", "single-file"],
+      "suites": ["quick", "standard", "full"],
+      "aliases": ["1. Python Coding (Streamlit HTML Job Parser)"],
+      "prompt_file": "prompts/python_streamlit_job_parser.md",
+      "extract": {
+        "kind": "code_block",
+        "langs": ["python", "py"],
+        "fallback_langs": ["python", "py", "bash", "sh", ""],
+        "save_as": "app.py"
+      },
+      "rubric": {
+        "category_score": "quality",
+        "accuracy": [
+          {
+            "id": "syntax",
+            "expect": "Code is valid Python",
+            "check": "validator",
+            "tool": "python",
+            "points": 60
+          },
+          {
+            "expect": "Uses Streamlit",
+            "check": "regex",
+            "pattern": "\\bimport\\s+streamlit\\b|\\bfrom\\s+streamlit\\b",
+            "points": 10
+          },
+          {
+            "expect": "Parses the HTML with BeautifulSoup",
+            "check": "regex",
+            "pattern": "BeautifulSoup",
+            "points": 10
+          },
+          {
+            "expect": "Has a text area for pasting HTML",
+            "check": "contains",
+            "value": "text_area",
+            "points": 10
+          },
+          {
+            "expect": "Shows the results in a table",
+            "check": "regex",
+            "pattern": "st\\.dataframe|st\\.table",
+            "points": 10
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Valid syntax (counted again for quality)",
+            "check": "passed",
+            "ref": "syntax",
+            "points": 25
+          },
+          {
+            "expect": "Handles errors with try/except",
+            "check": "all_of",
+            "points": 25,
+            "of": [
+              {"check": "regex", "pattern": "\\btry\\s*:"},
+              {"check": "regex", "pattern": "\\bexcept\\b"}
+            ]
+          },
+          {
+            "expect": "Clear button resets the data",
+            "check": "all_of",
+            "points": 25,
+            "of": [
+              {"check": "contains", "value": "button"},
+              {
+                "check": "any_of",
+                "of": [
+                  {"check": "contains", "value": "session_state"},
+                  {"check": "contains", "value": "clear", "case_sensitive": false},
+                  {"check": "contains", "value": "rerun"}
+                ]
+              }
+            ]
+          },
+          {
+            "expect": "No custom CSS or raw HTML styling",
+            "check": "none_of",
+            "points": 15,
+            "of": [
+              {"check": "contains", "value": "unsafe_allow_html=True"},
+              {"check": "contains", "value": "<style>"}
+            ]
+          },
+          {"expect": "Mostly code, little filler prose", "check": "code_ratio", "scale": 15, "max_points": 10}
+        ]
+      }
+    },
+    {
+      "id": "bash_network_monitor",
+      "name": "Systems Coding: Ubuntu Network Monitor (Bash)",
+      "description": "Asks for an Ubuntu Bash script that pings a local device, checks its HTTP dashboard on port 80 with curl, logs response times to a CSV file, and sends a desktop notification after 3 failures in a row.",
+      "goal": "A syntactically valid Bash script that uses ping and curl, records the response time in a CSV file, alerts with notify-send after 3 consecutive failures, and runs in a loop.",
+      "category": "coding",
+      "difficulty": "medium",
+      "tags": ["bash", "linux", "networking"],
+      "suites": ["quick", "standard", "full"],
+      "aliases": ["2. Systems Coding (Ubuntu Network Monitor Bash)"],
+      "prompt_file": "prompts/bash_network_monitor.md",
+      "extract": {
+        "kind": "code_block",
+        "langs": ["bash", "sh"],
+        "fallback_langs": ["python", "py", "bash", "sh", ""],
+        "save_as": "monitor.sh"
+      },
+      "rubric": {
+        "category_score": "quality",
+        "accuracy": [
+          {
+            "id": "syntax",
+            "expect": "Script passes a Bash syntax check",
+            "check": "validator",
+            "tool": "bash",
+            "points": 50,
+            "fallback": {
+              "expect": "Complete if/fi or while/done blocks plus ping or curl (old Windows heuristic)",
+              "check": "all_of",
+              "fail_points": 20,
+              "of": [
+                {
+                  "check": "any_of",
+                  "of": [
+                    {
+                      "check": "all_of",
+                      "of": [{"check": "contains", "value": "if "}, {"check": "contains", "value": "fi"}]
+                    },
+                    {
+                      "check": "all_of",
+                      "of": [{"check": "contains", "value": "while "}, {"check": "contains", "value": "done"}]
+                    }
+                  ]
+                },
+                {
+                  "check": "any_of",
+                  "of": [{"check": "contains", "value": "ping"}, {"check": "contains", "value": "curl"}]
+                }
+              ]
+            }
+          },
+          {"expect": "Pings the device", "check": "contains", "value": "ping ", "points": 10},
+          {
+            "expect": "Checks the HTTP dashboard with curl",
+            "check": "contains",
+            "value": "curl ",
+            "points": 10
+          },
+          {
+            "expect": "Measures the response time",
+            "check": "regex",
+            "pattern": "time_total|time_connect|%\\{time",
+            "points": 10
+          },
+          {
+            "expect": "Logs to a CSV file",
+            "check": "any_of",
+            "points": 10,
+            "of": [
+              {"check": "contains", "value": ".csv", "case_sensitive": false},
+              {"check": "contains", "value": ">>"}
+            ]
+          },
+          {
+            "expect": "Sends a desktop notification with notify-send",
+            "check": "contains",
+            "value": "notify-send",
+            "points": 10
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Valid syntax (counted again for quality)",
+            "check": "passed",
+            "ref": "syntax",
+            "points": 20
+          },
+          {"expect": "Starts with a shebang", "check": "regex", "pattern": "\\A\\s*#!/", "points": 15},
+          {
+            "expect": "Alerts after 3 consecutive failures",
+            "check": "all_of",
+            "points": 35,
+            "of": [
+              {"check": "regex", "pattern": "(-ge|-eq|>=|==)\\s*\\$?[A-Za-z0-9_]+"},
+              {"check": "contains", "value": "3"}
+            ]
+          },
+          {
+            "expect": "Runs in a loop with a sleep",
+            "check": "any_of",
+            "points": 20,
+            "of": [{"check": "regex", "pattern": "sleep\\s+"}, {"check": "contains", "value": "while "}]
+          },
+          {"expect": "Mostly code, little filler prose", "check": "code_ratio", "scale": 15, "max_points": 10}
+        ]
+      }
+    },
+    {
+      "id": "ai_gateway_architecture",
+      "name": "Software Architecture: Local AI Gateway and VRAM Scheduler",
+      "description": "Asks for a production design of a local AI gateway that connects several VS Code coding agents to one Linux server with a 24 GB NVIDIA P6000 running Ollama: queueing, model hot-swapping versus KV-cache pinning, TTFT and prompt caching, and health checks.",
+      "goal": "A detailed design (300+ words) covering queueing and concurrency, VRAM/OOM protection, KV-cache and hot-swap trade-offs, TTFT and prompt caching, and health checks with fallback, with an ASCII diagram and a markdown trade-off table.",
+      "category": "architecture",
+      "difficulty": "medium",
+      "tags": ["design", "gpu", "ollama"],
+      "suites": ["quick", "standard", "full"],
+      "aliases": ["3. Software Architecture (Local AI Gateway & VRAM Scheduler)"],
+      "prompt_file": "prompts/ai_gateway_architecture.md",
+      "extract": {"kind": "whole"},
+      "rubric": {
+        "category_score": "quality",
+        "accuracy": [
+          {
+            "expect": "Covers queueing and concurrency control",
+            "check": "regex",
+            "flags": "i",
+            "points": 20,
+            "pattern": "queue|semaphore|concurrency|rate.?limit|worker|fifo|backpressure"
+          },
+          {
+            "expect": "Covers VRAM and out-of-memory protection",
+            "check": "regex",
+            "flags": "i",
+            "points": 20,
+            "pattern": "vram|oom|out of memory|24\\s*gb|offload|keep_alive|num_parallel"
+          },
+          {
+            "expect": "Covers KV-cache and hot-swap trade-offs",
+            "check": "regex",
+            "flags": "i",
+            "points": 20,
+            "pattern": "kv.?cache|hot.?swap|context|pinning|evict|reload|quantiz"
+          },
+          {
+            "expect": "Covers TTFT and prompt caching",
+            "check": "regex",
+            "flags": "i",
+            "points": 20,
+            "pattern": "ttft|first token|prompt.?cach|prefix|streaming|warmup"
+          },
+          {
+            "expect": "Covers health checks, circuit breaking and fallback",
+            "check": "regex",
+            "flags": "i",
+            "points": 20,
+            "pattern": "health|circuit.?breaker|fallback|retry|timeout|heartbeat"
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Includes an ASCII architecture diagram",
+            "check": "regex",
+            "points": 30,
+            "pattern": "(\\+---|\\|---|┌|──|-->|==>|\\[.*?\\].*?>)"
+          },
+          {
+            "expect": "Includes a markdown comparison table",
+            "check": "all_of",
+            "points": 25,
+            "of": [{"check": "contains", "value": "|"}, {"check": "contains", "value": "---"}]
+          },
+          {
+            "expect": "Is detailed: 300+ words for full points, 150+ for half",
+            "check": "word_count",
+            "tiers": [{"min_words": 300, "points": 20}, {"min_words": 150, "points": 10}]
+          },
+          {
+            "expect": "Quarter of the accuracy score carries over",
+            "check": "scaled_score",
+            "of_rubric": "accuracy",
+            "factor": 0.25,
+            "max_points": 25
+          }
+        ]
+      }
+    },
+    {
+      "id": "algo_and_tool_dispatch",
+      "name": "Algorithmic and Agentic Triage: Complexity and JSON Tool Dispatch",
+      "description": "Two parts: explain QuickSort versus MergeSort complexity and pivot selection, then output a JSON array of parallel diagnostic tool calls for a failing checkout-service container on node prod-us-east-04.",
+      "goal": "Correct complexity analysis (O(n log n) average, O(n^2) worst case, pivot strategies, space use) and a JSON array calling get_container_logs, get_node_metrics and get_deployment_history with the right service and node.",
+      "category": "agentic",
+      "difficulty": "medium",
+      "tags": ["algorithms", "tool-calling", "json"],
+      "suites": ["quick", "standard", "full"],
+      "aliases": ["4. Algorithmic & Agentic Triage (Complexity + JSON Tool Dispatch)"],
+      "prompt_file": "prompts/algo_and_tool_dispatch.md",
+      "extract": {"kind": "whole"},
+      "rubric": {
+        "category_score": "quality",
+        "accuracy": [
+          {
+            "expect": "States O(n log n) complexity",
+            "check": "regex",
+            "flags": "i",
+            "points": 10,
+            "pattern": "o\\(n\\s*\\\\?log\\s*n\\)"
+          },
+          {
+            "expect": "States the O(n^2) worst case",
+            "check": "regex",
+            "flags": "i",
+            "points": 10,
+            "pattern": "o\\(n\\^2\\)|o\\(n²\\)"
+          },
+          {
+            "expect": "Discusses MergeSort",
+            "check": "regex",
+            "flags": "i",
+            "points": 10,
+            "pattern": "mergesort|merge sort"
+          },
+          {
+            "expect": "Covers pivot strategies (random, median-of-three)",
+            "check": "regex",
+            "flags": "i",
+            "points": 10,
+            "pattern": "median-of-three|median of three|random"
+          },
+          {
+            "expect": "Covers space complexity",
+            "check": "regex",
+            "flags": "i",
+            "points": 10,
+            "pattern": "in-place|auxiliary|space complexity|o\\(\\\\?log\\s*n\\)"
+          },
+          {
+            "expect": "Calls the three diagnostic tools with the right service and node",
+            "check": "tool_calls",
+            "source": "json_in_text",
+            "max_points": 50,
+            "count_duplicates": true,
+            "calls": [
+              {
+                "name": "get_container_logs",
+                "args": {"service_name": "checkout-service", "node_id": "prod-us-east-04"},
+                "points": 20
+              },
+              {"name": "get_node_metrics", "args": {"node_id": "prod-us-east-04"}, "points": 20},
+              {"name": "get_deployment_history", "args": {"service_name": "checkout-service"}, "points": 10}
+            ]
+          }
+        ],
+        "quality": "same_as_accuracy"
+      }
+    }
+  ]
+}

@@ -1,0 +1,432 @@
+{
+  "$schema": "../../schemas/testpack.schema.json",
+  "pack": "stretch",
+  "version": "1.2.0",
+  "description": "Harder tests that separate models the core pack can't: recovering from failed tool calls under a runbook, acting on the results in the next step, and reviewing design artifacts (plain and subtle) without inventing problems.",
+  "tests": [
+    {
+      "id": "agent_failure_recovery",
+      "name": "Agentic Recovery: Retry Only What Failed",
+      "description": "An on-call agent sees the results of five parallel tool calls on a self-hosted AI platform: one response is cut off, one timed out, three are valid. It must choose the next tool calls under a three-rule runbook.",
+      "goal": "Exactly two calls: retry the cut-off ollama-gpu01 health check and the timed-out gpu01 GPU status, with no repeated valid calls, no restart or unload, and no incident, returned as only a JSON array.",
+      "pass": {"accuracy": 100},
+      "category": "agentic",
+      "difficulty": "hard",
+      "tags": ["tool-calling", "error-recovery", "ops", "json"],
+      "suites": ["standard", "full"],
+      "prompt_file": "prompts/agent_failure_recovery.md",
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Retries the cut-off ollama-gpu01 health check",
+            "check": "tool_calls",
+            "max_points": 25,
+            "count_duplicates": false,
+            "calls": [{"name": "get_service_health", "args": {"service": "ollama-gpu01"}, "points": 25}]
+          },
+          {
+            "expect": "Retries the GPU status call that timed out",
+            "check": "tool_calls",
+            "max_points": 25,
+            "count_duplicates": false,
+            "calls": [{"name": "get_gpu_status", "args": {"host": "gpu01"}, "points": 25}]
+          },
+          {
+            "expect": "Doesn't repeat the three calls that succeeded (plain-text logs are valid)",
+            "check": "no_tool_calls",
+            "points": 20,
+            "calls": [
+              {"name": "get_service_health", "args": {"service": "llm-gateway"}},
+              {"name": "get_logs", "args": {"service": "llm-gateway"}},
+              {"name": "get_service_health", "args": {"service": "vector-db"}}
+            ]
+          },
+          {
+            "expect": "No restart or unload: no valid evidence of a down service or full VRAM",
+            "check": "no_tool_calls",
+            "points": 15,
+            "calls": [{"name": "restart_service"}, {"name": "unload_model"}]
+          },
+          {
+            "expect": "No incident: nothing is down and 18.4% errors is under the 25% threshold",
+            "check": "no_tool_calls",
+            "points": 15,
+            "calls": [{"name": "create_incident"}]
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "Every item is a {name, arguments} call to a listed tool",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "arguments"],
+                "properties": {
+                  "name": {
+                    "enum": [
+                      "get_service_health",
+                      "get_logs",
+                      "get_gpu_status",
+                      "restart_service",
+                      "unload_model",
+                      "create_incident"
+                    ]
+                  },
+                  "arguments": {"type": "object"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "artifact_consistency_review",
+      "name": "Design Review: Requirements vs Architecture vs Config",
+      "description": "Compares requirements, architecture notes and a gateway config for a self-hosted AI platform and reports every conflict in a markdown table with severity, cited item IDs, explanation and fix.",
+      "goal": "All five real conflicts (auth disabled, cloud overflow, 2 vs 8 concurrent, 16k vs 32k context, 5 s vs 2 s TTFT), the first two rated Critical, with no invented issues such as log retention or plain HTTP inside the network.",
+      "pass": {"accuracy": 100},
+      "category": "architecture",
+      "difficulty": "hard",
+      "tags": ["review", "requirements", "hallucination"],
+      "suites": ["standard", "full"],
+      "prompt_file": "prompts/artifact_consistency_review.md",
+      "extract": {"kind": "whole"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Finds that authentication is switched off (C2 vs R3, A3)",
+            "check": "table_row",
+            "points": 15,
+            "match": ["\\bC2\\b|auth\\w*:? ?(is |set to )?(none|off|disabled)|unauthenticated|no auth"]
+          },
+          {
+            "expect": "Finds that overflow goes to a cloud API (A4, C3 vs R4)",
+            "check": "table_row",
+            "points": 15,
+            "match": ["\\b(A4|C3)\\b|overflow|cloud"]
+          },
+          {
+            "expect": "Finds 2 parallel requests plus a queue vs 8 at once without queueing (A2, C4 vs R1)",
+            "check": "table_row",
+            "points": 15,
+            "match": ["\\b(A2|C4)\\b|num_parallel|parallel requests|concurren", "\\bR1\\b|\\b8\\b|eight"]
+          },
+          {
+            "expect": "Finds the 16,384-token context below the 32,768 required (A5, C5 vs R5)",
+            "check": "table_row",
+            "points": 15,
+            "match": ["\\b(A5|C5|R5)\\b|num_ctx|context", "16[,.\\s]?384|16k|32[,.\\s]?768|32k"]
+          },
+          {
+            "expect": "Finds the 5,000 ms TTFT target above the 2 s required (C6 vs R2)",
+            "check": "table_row",
+            "points": 15,
+            "match": ["\\b(C6|R2)\\b|ttft|first token", "[25][,.\\s]?000|\\b[25] ?s(ec|econds?)?\\b"]
+          },
+          {
+            "expect": "Invents no issues: log retention and plain HTTP inside the network break no requirement",
+            "check": "all_of",
+            "points": 15,
+            "of": [
+              {"check": "no_table_row", "match": ["\\b(A6|C7)\\b|retention|30 days"]},
+              {
+                "check": "no_table_row",
+                "match": ["\\btls\\b|unencrypted|plain[- ]?text|plain http|(without|not|no) https"]
+              }
+            ]
+          },
+          {
+            "expect": "Lists between 5 and 9 rows (some conflicts may be split per artifact)",
+            "check": "table_rows",
+            "points": 10,
+            "min_rows": 5,
+            "max_rows": 9
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Is a well-formed markdown table (has the |---| row under the header)",
+            "check": "detect",
+            "what": "markdown_table",
+            "points": 20
+          },
+          {
+            "expect": "Uses the four requested columns",
+            "check": "regex",
+            "flags": "im",
+            "points": 20,
+            "pattern": "^\\|\\s*severity\\s*\\|\\s*items\\s*\\|\\s*conflict\\s*\\|\\s*recommendation\\s*\\|"
+          },
+          {
+            "expect": "Rates the disabled authentication Critical",
+            "check": "table_row",
+            "points": 20,
+            "match": [
+              "\\bC2\\b|auth\\w*:? ?(is |set to )?(none|off|disabled)|unauthenticated|no auth",
+              "critical"
+            ]
+          },
+          {
+            "expect": "Rates the cloud overflow Critical",
+            "check": "table_row",
+            "points": 20,
+            "match": ["\\b(A4|C3)\\b|overflow|cloud", "critical"]
+          },
+          {
+            "expect": "Every row has a severity and cites item IDs",
+            "check": "table_rows",
+            "points": 20,
+            "min_rows": 1,
+            "all_match": ["critical|major|minor", "\\b[RAC][1-7]\\b"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "agent_recovery_followup",
+      "name": "Agentic Recovery: Act on the Retried Results",
+      "description": "The step after agent_failure_recovery: the two retries came back valid, showing a degraded Ollama server at 31.2% errors and a GPU at 98% VRAM. The agent must apply a five-rule runbook: unload only what the rules allow, in the right order, and open the right incident.",
+      "goal": "Exactly two calls: unload llama3.2-vision:11b on gpu01 (the largest idle model; that alone brings VRAM below 90%) and one sev2 incident naming ollama-gpu01, with no restart, no repeated checks and no other unloads, returned as only a JSON array.",
+      "pass": {"accuracy": 100},
+      "category": "agentic",
+      "difficulty": "hard",
+      "tags": ["tool-calling", "multi-step", "runbook", "ops", "json"],
+      "suites": ["standard", "full"],
+      "prompt_file": "prompts/agent_recovery_followup.md",
+      "extract": {"kind": "json_block"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Unloads llama3.2-vision:11b on gpu01: the largest idle model",
+            "check": "tool_calls",
+            "max_points": 25,
+            "count_duplicates": false,
+            "calls": [
+              {
+                "name": "unload_model",
+                "args": {"host": "gpu01", "model": "llama3.2-vision:11b"},
+                "points": 25
+              }
+            ]
+          },
+          {
+            "expect": "Unloads nothing else: 21.1 of 24 GB is already below 90%, and qwen3.6:35b is in use",
+            "check": "no_tool_calls",
+            "points": 15,
+            "calls": [
+              {"name": "unload_model", "args": {"model": "nomic-embed-text"}},
+              {"name": "unload_model", "args": {"model": "qwen3.6:35b"}}
+            ]
+          },
+          {
+            "expect": "Opens a sev2 incident: 31.2% errors is above 25% but not 50%, and the server isn't down",
+            "check": "tool_calls",
+            "max_points": 20,
+            "count_duplicates": false,
+            "calls": [{"name": "create_incident", "args": {"severity": "sev2"}, "points": 20}]
+          },
+          {
+            "expect": "The incident title names ollama-gpu01",
+            "check": "regex",
+            "points": 10,
+            "flags": "i",
+            "pattern": "\"title\"\\s*:\\s*\"[^\"]*ollama-gpu01"
+          },
+          {
+            "expect": "No restart (nothing is down), no sev1 or sev3, and only one incident",
+            "check": "all_of",
+            "points": 15,
+            "of": [
+              {
+                "check": "no_tool_calls",
+                "calls": [
+                  {"name": "restart_service"},
+                  {"name": "create_incident", "args": {"severity": "sev1"}},
+                  {"name": "create_incident", "args": {"severity": "sev3"}}
+                ]
+              },
+              {"check": "not_regex", "pattern": "create_incident[\\s\\S]*create_incident"}
+            ]
+          },
+          {
+            "expect": "Repeats no checks: every response is now valid, and a re-check can't see this step's unload",
+            "check": "no_tool_calls",
+            "points": 15,
+            "calls": [{"name": "get_service_health"}, {"name": "get_gpu_status"}, {"name": "get_logs"}]
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Replies with only the fenced JSON block",
+            "check": "regex",
+            "on": "response",
+            "flags": "s",
+            "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
+            "points": 50
+          },
+          {
+            "expect": "Every item is a {name, arguments} call to a listed tool",
+            "check": "json_schema",
+            "points": 50,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "arguments"],
+                "properties": {
+                  "name": {
+                    "enum": [
+                      "get_service_health",
+                      "get_logs",
+                      "get_gpu_status",
+                      "restart_service",
+                      "unload_model",
+                      "create_incident"
+                    ]
+                  },
+                  "arguments": {"type": "object"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "artifact_review_subtle",
+      "name": "Design Review: Units, Metrics and Look-alikes",
+      "description": "A harder design review: requirements, architecture notes and a gateway config where the conflicts hide in units (MB vs MiB, hours vs days), metrics (average vs p95) and model tags, next to look-alikes that agree once converted (30,000 ms vs 30 s) and an overflow server that stays inside the LAN.",
+      "goal": "All six real conflicts (floating model tag, 600 vs 60 requests a minute, 8,760-hour vs 90-day tokens, 2,000,000 bytes vs 2 MiB, average vs p95 TTFT, prompts logged to disk), prompt logging rated Critical, and no invented issues about the LAN overflow, plain HTTP inside the network or the health checks.",
+      "pass": {"accuracy": 100},
+      "category": "architecture",
+      "difficulty": "hard",
+      "tags": ["review", "requirements", "units", "hallucination"],
+      "suites": ["standard", "full"],
+      "prompt_file": "prompts/artifact_review_subtle.md",
+      "extract": {"kind": "whole"},
+      "rubric": {
+        "accuracy": [
+          {
+            "expect": "Finds the floating qwen3.6:latest tag instead of the pinned model (C1 vs R7)",
+            "check": "table_row",
+            "points": 12,
+            "match": ["\\bC1\\b|:latest|\\blatest\\b", "\\bR7\\b|pinn|35b-a3b|q4_k_m"]
+          },
+          {
+            "expect": "Finds 600 requests a minute allowed against the 60 limit (C2 vs R2)",
+            "check": "table_row",
+            "points": 12,
+            "match": ["\\b(C2|R2)\\b|rate", "\\b600\\b|\\b60\\b|ten ?times|10 ?x"]
+          },
+          {
+            "expect": "Finds 8,760-hour (365-day) tokens against the 90-day maximum (C3 vs R4)",
+            "check": "table_row",
+            "points": 12,
+            "match": ["\\b(C3|R4)\\b|ttl|expir", "8[,.\\s]?760|365|\\bone year|\\b1 ?year|\\b90\\b"]
+          },
+          {
+            "expect": "Finds max_body_bytes 2,000,000 below the 2 MiB (2,097,152) required (C4 vs R5, A1)",
+            "check": "table_row",
+            "points": 12,
+            "match": [
+              "\\b(C4|R5|A1)\\b|body|max_body",
+              "2[,.\\s]?000[,.\\s]?000|2[,.\\s]?097[,.\\s]?152|mib|\\bmb\\b|mega"
+            ]
+          },
+          {
+            "expect": "Finds that average TTFT is tracked but the requirement is p95 (A5, C6 vs R1)",
+            "check": "table_row",
+            "points": 12,
+            "match": ["\\b(A5|C6|R1)\\b|ttft|first token", "p95|percentile|average|\\bavg\\b|mean"]
+          },
+          {
+            "expect": "Finds that prompts are logged to disk (C7, A3 vs R3)",
+            "check": "table_row",
+            "points": 12,
+            "match": [
+              "\\b(C7|A3)\\b|log_prompts|written to disk|on disk|stor(e|ed|es|ing|age)",
+              "prompt|completion"
+            ]
+          },
+          {
+            "expect": "Invents no issues: the overflow stays in the LAN, plain HTTP inside it breaks nothing stated, 30,000 ms is 30 s, and no requirement says what a health check must call",
+            "check": "all_of",
+            "points": 18,
+            "of": [
+              {"check": "no_table_row", "match": ["\\b(A2|C9)\\b|overflow|llm\\.internal"]},
+              {
+                "check": "no_table_row",
+                "match": ["\\btls\\b|https|unencrypted|encrypt|plain[- ]?text|plain http"]
+              },
+              {"check": "no_table_row", "match": ["\\b(A6|C5|R6)\\b|health|/api/version"]}
+            ]
+          },
+          {
+            "expect": "Lists between 6 and 10 rows (some conflicts may be split per artifact)",
+            "check": "table_rows",
+            "points": 10,
+            "min_rows": 6,
+            "max_rows": 10
+          }
+        ],
+        "quality": [
+          {
+            "expect": "Is a well-formed markdown table (has the |---| row under the header)",
+            "check": "detect",
+            "what": "markdown_table",
+            "points": 20
+          },
+          {
+            "expect": "Uses the four requested columns",
+            "check": "regex",
+            "flags": "im",
+            "points": 20,
+            "pattern": "^\\|\\s*severity\\s*\\|\\s*items\\s*\\|\\s*conflict\\s*\\|\\s*recommendation\\s*\\|"
+          },
+          {
+            "expect": "Rates prompt logging to disk Critical",
+            "check": "table_row",
+            "points": 20,
+            "match": [
+              "\\b(C7|A3)\\b|log_prompts|written to disk|on disk|stor(e|ed|es|ing|age)",
+              "prompt|completion",
+              "critical"
+            ]
+          },
+          {
+            "expect": "Every row has a severity and cites item IDs",
+            "check": "table_rows",
+            "points": 20,
+            "min_rows": 1,
+            "all_match": ["critical|major|minor", "\\b[RAC][1-9]\\b"]
+          },
+          {
+            "expect": "Rates the 600-a-minute rate limit Major or Critical",
+            "check": "table_row",
+            "points": 10,
+            "match": ["\\b(C2|R2)\\b|rate", "\\b600\\b", "critical|major"]
+          },
+          {
+            "expect": "Rates the year-long tokens Major or Critical",
+            "check": "table_row",
+            "points": 10,
+            "match": ["\\b(C3|R4)\\b|ttl|expir", "critical|major"]
+          }
+        ]
+      }
+    }
+  ]
+}
