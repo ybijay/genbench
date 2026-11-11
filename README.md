@@ -1,20 +1,48 @@
 # genbench
 
-A configurable benchmark for local LLMs. It is the successor to `../ollama_local_benchmark.py`: the same
-tests and scores, but everything that was hardcoded now lives in files. Run settings live in
-`genbench.toml`; tests live in JSON packs that anyone can add to without touching the code.
+A benchmark for the language models you run on your own hardware. Point it at an Ollama server and it
+runs each model through 14 tests (writing code, reading code, design review, agent decisions, and
+finding facts in long logs), grades every answer, measures speed, and writes a ranked leaderboard.
 
-## Quick start on one machine
+- **Nothing is hardcoded.** Settings live in one small `genbench.toml`, and every part of it is optional.
+- **Tests are plain JSON.** Each one states what it asks, what a passing answer looks like and how every
+  point is earned, and you can add your own without touching the code.
+- **Grading is automatic and repeatable.** It never runs the code a model writes.
 
-With Ollama running on the same machine, no config file is needed:
+## What you need
 
-```powershell
+- **[Ollama](https://ollama.com)** with at least one model pulled, on this machine or another one on your
+  network. genbench supports Ollama only for now. OpenAI-compatible servers (LM Studio, llama.cpp, vLLM)
+  are planned but not built yet.
+- **[uv](https://docs.astral.sh/uv/)**, which installs genbench and its own copy of Python. Windows, Linux
+  and macOS all work. (Plain `pip` works too; see Install.)
+
+The machine that runs genbench needs no GPU and little memory. It only sends prompts to the server and
+grades the text that comes back.
+
+## Quick start
+
+```bash
+git clone https://github.com/ybijay/genbench.git genbench
+cd genbench
 uv sync
-uv run genbench run                     # shows the models Ollama has installed and asks before running them
-uv run genbench run -m llama3.2:3b      # or name the model yourself
+uv run genbench run --suite quick -m llama3.2:3b
 ```
 
-To fix the list of models, put one line in a `genbench.toml`:
+Use any model name that `ollama list` shows in place of `llama3.2:3b`. That runs the four original tests on
+one model, which takes a few minutes, and finishes by printing a leaderboard and the folder it wrote the
+results to.
+
+From there:
+
+```bash
+uv run genbench run                    # all 14 tests; with no config it lists your installed models and asks first
+uv run genbench list tests             # see what the tests are
+uv run genbench explain code_trace_python    # what one test asks and how it is scored
+uv run genbench --help
+```
+
+To fix the list of models, put one line in a `genbench.toml` next to the README:
 
 ```toml
 models = ["llama3.2:3b", "qwen3:8b"]
@@ -22,31 +50,63 @@ models = ["llama3.2:3b", "qwen3:8b"]
 
 `genbench.example.toml` shows the few other lines people usually need, such as a server on another machine.
 
-**Status: Phase 1.** genbench runs the benchmark end to end against Ollama: it warms up each model, streams
-every test, grades it, and writes a run folder with results and reports. Re-grading the old script's 40 saved
-results reproduces its scores (40/40 within 0.1) and both saved leaderboards exactly. OpenAI-compatible servers
-(LM Studio, llama.cpp, vLLM) arrive in Phase 2.
+## What to expect
+
+- **Time.** The full set of 14 tests took between 17 and 35 minutes per model on a 24 GB GPU with 27B to 35B
+  models that think before answering. Small or non-thinking models are much quicker. `--suite quick` runs
+  only the four original tests, and `-t TEST` (repeatable) runs the ones you name.
+- **Difficulty.** The tests were tuned against 27B to 35B models. Small models will fail many of the
+  harder ones; that is the benchmark working, not a setup problem.
+- **Context window.** Three tests feed the model long logs (16k, 24k and 48k tokens). A test that doesn't
+  fit a model's context window is skipped for that model, and a test any model skipped is left out of
+  everyone's scores so the comparison stays fair. With Ollama's small default window, expect those to be
+  skipped until you raise it, for example `{ name = "qwen3:8b", options = { num_ctx = 32768 } }`.
+- **Theme.** Several tests are set in the world of a self-hosted AI coding platform (an inference gateway,
+  a GPU server, a rate limiter). The model needs no background in it; everything is in the prompt.
+
+## Reading the results
+
+Every run gets its own folder under `runs/`. Open `leaderboard.md` first:
+
+- **Overall** combines accuracy (30%), the Coding column (25%), the Architecture column (20%), generation
+  speed (15%) and time to first token (10%). Speed is scored relative to the fastest model in the run, so
+  compare Overall only between runs of the same models and tests. The weights are in `[scoring.weights]`.
+- **Passed** counts tests that reached their pass mark. Accuracy is whether the answer was right; quality
+  is how well it was presented.
+- **Results by test** lists, for every test, what was asked, the goal, and exactly which expectations
+  each model missed.
+
+If a model's reply was cut off, or it never answered because it filled its context window while thinking,
+the report says so in plain words.
+
+## If something goes wrong
+
+| You see | It means | Do this |
+| --- | --- | --- |
+| `can't reach endpoint 'local'` | Ollama isn't running, or isn't on this machine | Start Ollama, or point genbench at its machine (see Configuration) |
+| `model '...' isn't on this server` | The name doesn't match an installed model | Copy the exact name from `ollama list`, or `ollama pull` it |
+| `SKIP  Needs a context window of about ...` | The test's prompt is larger than the model's window | Raise `num_ctx` for that model, or ignore it |
+| `only 87% of the model fits in VRAM` | Part of the model runs on the CPU, so it will be slow | Use a smaller model or build, or a smaller `num_ctx` |
+| `No answer. Ran out of context window` | The model used its whole window thinking | Nothing to fix; that attempt counts as failed |
+
+`uv run genbench validate --online` checks the config, the server and every model name before a long run.
 
 ## Install
 
-Needs Python 3.10 or newer.
-
 With [uv](https://docs.astral.sh/uv/) (recommended; it also installs Python if you don't have it):
 
-```powershell
-cd genbench
+```bash
 uv sync                      # creates .venv with genbench and its dependencies
 uv run genbench validate     # run any command through uv
 ```
 
 To get a `genbench` command everywhere: `uv tool install --editable .`
 
-With pip:
+With pip (needs Python 3.10 or newer):
 
-```powershell
-cd genbench
+```bash
 python -m venv .venv
-.venv\Scripts\activate          # Linux/macOS: source .venv/bin/activate
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -e .
 genbench validate
 ```
@@ -56,14 +116,14 @@ genbench validate
 | Command | What it does |
 | --- | --- |
 | `genbench init [DIR]` | Write a short `genbench.toml` (only what differs from the defaults), plus `packs/` and `schemas/`. `--host` (repeatable), `--import-models models.txt`, `--no-probe`, `--force`; `--full` writes every section |
-| `genbench validate` | Check the config and every pack without calling a model. `--online` also contacts each server and checks the models exist; `--portable` warns about regex features Rust v2 won't support; `--strict` fails on warnings |
+| `genbench validate` | Check the config and every pack without calling a model. `--online` also contacts each server and checks the models exist; `--portable` warns about regex features the planned Rust version won't support; `--strict` fails on warnings |
 | `genbench list tests` | List tests (`--suite`, `--tag`); also `list packs`, `list models`, `list endpoints`, `list runs` |
 | `genbench explain TEST` | Show what a test asks, its goal, pass mark and every expectation with its points |
 | `genbench new-test` | Start a test from plain-English sentences, then attach a check to each expectation |
 | `genbench run` | Run the tests on every enabled model. `--model` and `--test` (repeatable) narrow it down; also `--suite`, `--tag`, `--repeats`. With no models in the config it offers the installed ones (`--all-models` skips the question). Ctrl+C stops cleanly and still writes reports |
 | `genbench report RUN` | Rebuild a run folder's reports from its `results.jsonl`, e.g. after changing weights |
 | `genbench regrade RUN` | Re-score a run's saved answers with today's packs and config, into a new run folder |
-| `genbench regrade --from-python-csv FILE` | Re-score results saved by `ollama_local_benchmark.py` and compare with the old scores |
+| `genbench regrade --from-python-csv FILE` | Re-score a results CSV saved by the script genbench grew out of, and compare with its scores |
 | `genbench clean` | Delete run folders. With no options: only incomplete ones (interrupted, failed, empty, killed). Also `--all`, `--older-than 30d`, `--keep N` (newest completed), or name folders. `--dry-run` previews; it asks before deleting unless `--yes` |
 | `genbench schema` | Print the JSON Schema for packs (`--out FILE` to write it) |
 
@@ -72,10 +132,10 @@ Every command takes `--config FILE` and `--set KEY=VALUE` (repeatable) before th
 
 ## Running a benchmark
 
-```powershell
+```bash
 uv run genbench validate --online     # check the config, packs, server and models first
 uv run genbench run                   # every enabled model x every test
-uv run genbench run -m qwen3.6:35b-a3b-coding-mtp-q4_K_M -t bash_network_monitor
+uv run genbench run -m qwen3:8b -t bash_network_monitor
 ```
 
 Each run gets its own folder under `runs/` (from `[run].output_dir`), named by date, time and `[run].name`:
@@ -84,7 +144,7 @@ Each run gets its own folder under `runs/` (from `[run].output_dir`), named by d
 | --- | --- |
 | `results.jsonl` | One line per attempt: timings, the full answer and thinking, every check's result. Everything else is built from it |
 | `leaderboard.md` | Ranked table (Overall, Passed, Accuracy, each category, TTFT, tok/s, VRAM), category winners, and for every test what was asked, its goal and each model's missed expectations |
-| `results.csv` | The old script's columns first, then Test ID, Result (PASS, FAIL, SKIPPED or ERROR), Pass Mark, Repeat, Wall TTFT, Error, Quality |
+| `results.csv` | One row per attempt for spreadsheets: timings, scores, notes and the answer, then Test ID, Result (PASS, FAIL, SKIPPED or ERROR), Pass Mark, Repeat, Wall TTFT, Error, Quality |
 | `summary.json` | Per-model aggregates for scripts and dashboards |
 | `run.json` | When it ran, the models and endpoints used, and each test's goal and definition hash |
 | `artifacts/` | Extracted code per model and test (e.g. `app.py`, `monitor.sh`) |
@@ -100,7 +160,7 @@ server: both slow a run down and make its speeds unfair to compare.
 Each model's block in the console starts with its type and ends with a total:
 
 ```text
-[1/5] qwen3.6:35b-a3b-coding-mtp-q4_K_M on blueboy  (MoE)
+[1/5] qwen3.6:35b-a3b-coding-mtp-q4_K_M on local  (MoE)
   Warming up... ready (cold load 52.91s | VRAM 20.5GB (100% GPU @ 32k))
   Code Reasoning: Predict a Script's Output                  PASS  92.14s | TTFT 1.29s | 90.44 tok/s | acc 100.0 | quality 100.0
   ...
@@ -113,14 +173,14 @@ its size suggests) or Dense. genbench reads it from the server: an expert count 
 `type = "dense"` on a `[[models]]` block to override it. The total is the time the model's tests took, not
 counting the model load, and the average matches the Tokens/Sec column of the leaderboard.
 
-Scores work as before: accuracy (did it do what was asked) and quality (how well) per test, both 0-100,
-plus PASS or FAIL against the pass mark. Overall weighs accuracy, each category and speed by
-`[scoring.weights]`, exactly like the old leaderboard.
+Every test gets two scores from 0 to 100, accuracy (did it do what was asked) and quality (how well),
+plus PASS or FAIL against its pass mark. Overall weighs accuracy, the weighted categories and speed by
+`[scoring.weights]`.
 
 **Category columns.** Each test adds one number to its category column (Coding, Architecture, Agentic,
 Long Context): by default the average of its accuracy and quality, so a wrong answer lowers the column
 even when the format was perfect. A test can choose one of the two with `"category_score": "quality"` or
-`"accuracy"` in its rubric; the core pack uses `quality`, which is what the original script did. Harder
+`"accuracy"` in its rubric; the core pack uses `quality`. Harder
 tests count for more in Accuracy and the category columns (`[scoring].difficulty_weights`: medium 1,
 hard 1.5).
 
@@ -196,8 +256,8 @@ The main sections:
 | `[scoring]` | `pass_mark`, difficulty weights, and `[scoring.weights]` for the Overall score |
 | `[report]` | Output formats and leaderboard title |
 
-**Running somewhere else.** Nothing about Hanuman or Blueboy is built in. On another machine, run
-`genbench init --host my-gpu-box` (or `--host` several times, or none for localhost) and review the file it
+**Writing the config for you.** `genbench init --host my-gpu-box` (or `--host` several times, or none for
+this machine) asks the server which models it has and writes a short `genbench.toml`. Review the file it
 writes.
 
 **A small machine is enough.** genbench only sends prompts to the model server and grades the text that
@@ -258,8 +318,6 @@ every answer is exact, and nothing the model writes is run:
   round-half-to-even and so on). Seven of eight passes.
 - `code_review_planted_bugs`: a 58-line module with numbered lines; five lines don't do what their
   docstring says and three look wrong but are correct. The answer lists the defects by line number.
-  (Version 1.1.0 makes the docstring on line 21 promise a new plan per call; in 1.0.0 the shared default
-  list on line 20 broke no stated promise, and all five models rightly left it out.)
 
 The expected answers of both are checked by really running the code in `tests/test_code_reasoning_pack.py`.
 
@@ -308,6 +366,19 @@ autocomplete and inline errors.
 
 ## Development
 
-```powershell
+```bash
 uv run pytest
 ```
+
+The tests need no model server; they run against a small fake one. A few compare genbench with the
+script it grew out of, and skip on their own when that script isn't present.
+
+## Background
+
+genbench began as a single Python script with four hardcoded tasks. Those four are now the `core` pack,
+and their scoring was kept exactly as it was, which is why that pack scores a little differently from the
+others (see Category columns). A Rust version that reads the same config, packs and results is planned.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
