@@ -51,6 +51,7 @@ TRUNCATION_SHARE = 0.95  # a prompt this close to the context window may have be
 CONTEXT_MARGIN = 1.05  # the size estimate runs up to 5% low (Gemma)
 ANSWER_RESERVE = 2000  # tokens kept free for thinking and the answer
 WINDOW_SLACK = 4  # a reply that ends this close to the window's last token was stopped by it
+WINDOW_OVERRUN = 64  # more than this past the window means the server slid the window instead of stopping
 
 
 def prompt_variables(lt: LoadedTest) -> dict[str, Any]:
@@ -101,6 +102,11 @@ def cut_off_warning(prompt_tokens: int, completion_tokens: int, context_tokens: 
                     answered: bool) -> str | None:
     """The reply stopped because it ran out of room, not because the model was done."""
     effect = "so the answer may be cut short" if answered else "so it never answered"
+    if context_tokens and prompt_tokens + completion_tokens > context_tokens + WINDOW_OVERRUN:
+        # Some servers don't stop at a full window: they drop the oldest text and let the model carry on.
+        return (f"Went past the context window: {prompt_tokens:,} prompt + {completion_tokens:,} generated tokens is more "
+                f"than the {context_tokens:,}-token window, so the server dropped the oldest text and the model lost the "
+                "start of its prompt")
     if context_tokens and prompt_tokens + completion_tokens >= context_tokens - WINDOW_SLACK:
         return (f"Ran out of context window: {prompt_tokens:,} prompt + {completion_tokens:,} generated tokens "
                 f"filled the {context_tokens:,}-token window, {effect}")

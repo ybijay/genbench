@@ -320,6 +320,9 @@ def test_cut_off_warning():
     assert cut_off_warning(1000, 4096, None, "length", answered=True) == (
         "Stopped at the output limit after 4,096 generated tokens, so the answer may be cut short")
     assert cut_off_warning(16269, 6000, 32768, "stop", answered=True) is None
+    slid = cut_off_warning(12470, 40288, 24576, "stop", answered=True)  # nemotron on the tally at a 24k window
+    assert slid.startswith("Went past the context window: 12,470 prompt + 40,288 generated tokens is more than the 24,576-token")
+    assert slid.endswith("the model lost the start of its prompt")
 
 
 def test_running_out_of_window_while_thinking_is_reported_as_such(project):
