@@ -66,6 +66,9 @@ models = ["llama3.2:3b", "qwen3:8b"]
 
 ## Reading the results
 
+For a real example, see [results/2026-11-10_blueboy-p6000.md](results/2026-11-10_blueboy-p6000.md): three
+models on a 24 GB NVIDIA Quadro P6000, all 14 tests.
+
 Every run gets its own folder under `runs/`. Open `leaderboard.md` first:
 
 - **Overall** combines accuracy (30%), the Coding column (25%), the Architecture column (20%), generation
