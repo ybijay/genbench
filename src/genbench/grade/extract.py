@@ -24,19 +24,35 @@ class Artifact:
     response: str  # the whole response, thinking removed (unless strip_thinking is off)
     ratio: float  # share of the response that is the artifact; feeds code_ratio
     found_block: bool  # a fenced block was found
+    closed: bool = True  # False when a JSON block's closing ``` was missing and it ran to the end of the reply
+
+
+def _lang_group(langs: tuple[str, ...]) -> str:
+    names = [re.escape(lang) for lang in langs if lang]
+    if names:
+        return "(?:" + "|".join(names) + ")" + ("?" if "" in langs else "")
+    return "" if "" in langs else "[^\\n`]*"
 
 
 @lru_cache(maxsize=64)
 def fence_pattern(langs: tuple[str, ...]) -> re.Pattern[str]:
     """```lang\\n ... ``` for the given languages; '' allows an untagged fence; () allows any tag."""
-    names = [re.escape(lang) for lang in langs if lang]
-    if names:
-        group = "(?:" + "|".join(names) + ")" + ("?" if "" in langs else "")
-    elif "" in langs:
-        group = ""
-    else:
-        group = "[^\\n`]*"
-    return re.compile("```" + group + r"\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
+    return re.compile("```" + _lang_group(langs) + r"\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
+
+
+@lru_cache(maxsize=64)
+def opening_fence_pattern(langs: tuple[str, ...]) -> re.Pattern[str]:
+    return re.compile("```" + _lang_group(langs) + r"\s*\n", re.IGNORECASE)
+
+
+def unclosed_block(text: str, langs: tuple[str, ...]) -> str | None:
+    """The body of a fence that opens and is never closed: everything after the last opening fence,
+    provided no ``` follows it. None when there is no such fence."""
+    openers = list(opening_fence_pattern(langs).finditer(text))
+    if not openers:
+        return None
+    rest = text[openers[-1].end():]
+    return None if "```" in rest else rest
 
 
 def extract(response: str | None, spec: Extract) -> Artifact:
@@ -53,6 +69,15 @@ def extract(response: str | None, spec: Extract) -> Artifact:
     matches = fence_pattern(tuple(primary)).findall(cleaned)
     if not matches and spec.fallback_langs is not None:
         matches = fence_pattern(tuple(spec.fallback_langs)).findall(cleaned)
+    if not matches and spec.kind == "json_block":
+        # A reply that opens a JSON fence and stops without closing it still holds the answer; grade it
+        # (the built-in rubrics take a few quality points for the missing fence). Only for JSON: an
+        # unclosed code fence is usually a reply cut off mid-file.
+        for langs in (primary, spec.fallback_langs):
+            body = unclosed_block(cleaned, tuple(langs)) if langs is not None else None
+            if body and body.strip():
+                block = body.strip()
+                return Artifact(block, cleaned, min(1.0, len(block) / max(1, len(cleaned))), True, closed=False)
     if not matches:
         if spec.on_no_block == "whole_response":
             return Artifact(cleaned, cleaned, 1.0, False)

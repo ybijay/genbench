@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/testpack.schema.json",
   "pack": "code-reasoning",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Reading code instead of writing it: predict what a script prints and find planted bugs by line number. Every answer is exact, and no generated code is run.",
   "tests": [
     {
@@ -94,11 +94,26 @@
         "quality": [
           {
             "expect": "Replies with only the fenced JSON block",
+            "check": "any_of",
+            "of": [
+              {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z"},
+              {
+                "check": "all_of",
+                "of": [
+                  {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n(?:[^`]|`[^`]|``[^`])*`{0,2}\\Z"},
+                  {"check": "json_valid"}
+                ]
+              }
+            ],
+            "points": 40
+          },
+          {
+            "expect": "Replies with only the fenced JSON block, closing ``` included",
             "check": "regex",
             "on": "response",
             "flags": "s",
             "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
-            "points": 50
+            "points": 10
           },
           {
             "expect": "The object has exactly the keys q1 to q8",
@@ -219,11 +234,26 @@
         "quality": [
           {
             "expect": "Replies with only the fenced JSON block",
+            "check": "any_of",
+            "of": [
+              {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z"},
+              {
+                "check": "all_of",
+                "of": [
+                  {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n(?:[^`]|`[^`]|``[^`])*`{0,2}\\Z"},
+                  {"check": "json_valid"}
+                ]
+              }
+            ],
+            "points": 40
+          },
+          {
+            "expect": "Replies with only the fenced JSON block, closing ``` included",
             "check": "regex",
             "on": "response",
             "flags": "s",
             "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
-            "points": 50
+            "points": 10
           },
           {
             "expect": "Every finding has a line number, a problem and a fix",

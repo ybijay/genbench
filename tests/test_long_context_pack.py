@@ -170,6 +170,13 @@ CASES_24K = [
     ("prose-around-json", "From the log:\n\n" + fenced(GOOD_24K), (100.0, 50.0, True)),
     ("extra-key", fenced({**GOOD_24K, "notes": "ops-frank was rejected"}), (100.0, 50.0, True)),
     ("no-json", "num_parallel is 5, changed by ops-erin.", (0.0, 0.0, False)),
+    # The closing fence missing costs 10 quality points, not the answer (ornith did this on 2026-11-18).
+    ("closing-fence-missing", "```json\n" + json.dumps(GOOD_24K), (100.0, 90.0, True)),
+    ("closing-fence-missing-indented", "```json\n" + json.dumps(GOOD_24K, indent=2) + "\n", (100.0, 90.0, True)),
+    ("prose-then-unclosed-fence", "From the log:\n\n```json\n" + json.dumps(GOOD_24K), (100.0, 50.0, True)),
+    ("cut-off-mid-json", "```json\n" + json.dumps(GOOD_24K)[:40], (0.0, 0.0, False)),
+    ("bare-json", json.dumps(GOOD_24K), (100.0, 50.0, True)),
+    ("invalid-json-in-closed-fence", '```json\n{"num_parallel": 5,}\n```', (0.0, 50.0, False)),
 ]
 
 
@@ -182,6 +189,17 @@ def test_long_context_16k_grading(pack, tmp_path):
     good = ANSWERS["long_context_16k"]
     assert grade(pack, "long_context_16k", fenced(good), tmp_path) == (100.0, 100.0, True)
     assert grade(pack, "long_context_16k", fenced({**good, "changed_by": "ops-alice", "num_parallel": 4}), tmp_path)[0] == 50.0
+
+
+def test_an_answer_without_its_closing_fence_passes_and_says_why_it_lost_points(pack, tmp_path):
+    """ornith-1.5's reply on 2026-11-18, which used to score 0 / 0."""
+    cfg = Config()
+    ctx = GradeContext(ValidatorRunner(cfg.validators), tmp_path, pack.dir, cfg.scoring.pass_mark)
+    reply = "```json\n" + json.dumps(ANSWERS["long_context_16k"])
+    result = grade_test(find(pack, "long_context_16k"), reply, ctx)
+    assert (result.accuracy, result.quality, result.passed) == (100.0, 90.0, True)
+    assert result.notes.startswith("Missed: Replies with only the fenced JSON block, closing ``` included |")
+    assert "JSON block never closed" in result.notes
 
 
 def test_long_context_48k_grading(pack, tmp_path):
@@ -203,6 +221,7 @@ TALLY_CASES = [
     ("none-as-text", fenced({**TALLY, "rate_limited_client": "none"}), (100.0, 70.0, True)),
     ("numbers-as-strings", fenced({**TALLY, "bad_gateway_count": "8", "worst_health_p95_ms": "2200"}), (100.0, 70.0, True)),
     ("prose-around-json", "Here are the tallies:\n\n" + fenced(TALLY), (100.0, 60.0, True)),
+    ("closing-fence-missing", "```json\n" + json.dumps(TALLY, indent=2), (100.0, 90.0, True)),
     ("missing-key", fenced({k: v for k, v in TALLY.items() if k != "rate_limited_client"}), (84.0, 70.0, True)),
     ("all-wrong", fenced({"bad_gateway_count": 0, "cancelled_input_tokens": 0, "notebook_embed_count": 0,
                           "slowest_request": "r-1", "worst_health_p95_ms": 0, "rate_limited_client": "ide-ws-01"}),

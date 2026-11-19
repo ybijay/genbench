@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/testpack.schema.json",
   "pack": "stretch",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Harder tests that separate models the core pack can't: recovering from failed tool calls under a runbook, acting on the results in the next step, and reviewing design artifacts (plain and subtle) without inventing problems.",
   "tests": [
     {
@@ -58,11 +58,26 @@
         "quality": [
           {
             "expect": "Replies with only the fenced JSON block",
+            "check": "any_of",
+            "of": [
+              {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z"},
+              {
+                "check": "all_of",
+                "of": [
+                  {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n(?:[^`]|`[^`]|``[^`])*`{0,2}\\Z"},
+                  {"check": "json_valid"}
+                ]
+              }
+            ],
+            "points": 40
+          },
+          {
+            "expect": "Replies with only the fenced JSON block, closing ``` included",
             "check": "regex",
             "on": "response",
             "flags": "s",
             "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
-            "points": 50
+            "points": 10
           },
           {
             "expect": "Every item is a {name, arguments} call to a listed tool",
@@ -271,11 +286,26 @@
         "quality": [
           {
             "expect": "Replies with only the fenced JSON block",
+            "check": "any_of",
+            "of": [
+              {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z"},
+              {
+                "check": "all_of",
+                "of": [
+                  {"check": "regex", "on": "response", "flags": "s", "pattern": "\\A```(json)?[ \\t]*\\n(?:[^`]|`[^`]|``[^`])*`{0,2}\\Z"},
+                  {"check": "json_valid"}
+                ]
+              }
+            ],
+            "points": 40
+          },
+          {
+            "expect": "Replies with only the fenced JSON block, closing ``` included",
             "check": "regex",
             "on": "response",
             "flags": "s",
             "pattern": "\\A```(json)?[ \\t]*\\n.*```\\Z",
-            "points": 50
+            "points": 10
           },
           {
             "expect": "Every item is a {name, arguments} call to a listed tool",

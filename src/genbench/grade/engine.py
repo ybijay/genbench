@@ -135,7 +135,10 @@ def grade_test(
         quality_results, quality = evaluator.section("quality", test.rubric.quality)
         results += quality_results
     accuracy, quality = round(accuracy, 1), round(quality, 1)
-    return Grade(accuracy, quality, _passes(mark, accuracy, quality), mark_text, results, _notes(results), artifact, saved,
+    notes = _notes(results)
+    if not artifact.closed:
+        notes += " | JSON block never closed with ```; graded what was there"
+    return Grade(accuracy, quality, _passes(mark, accuracy, quality), mark_text, results, notes, artifact, saved,
                  category_score(test.rubric.category_score, accuracy, quality))
 
 
