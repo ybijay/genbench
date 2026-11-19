@@ -22,6 +22,12 @@ from genbench.backends.base import (
 from genbench.config import Endpoint
 
 
+# A loaded model takes at least about its file size. Ollama's llamacpp runner (the gemma4 models, seen up
+# to 0.40.16) reports far less in /api/ps, e.g. 1.1GB for a 17.4GB model; below this share of the file
+# size the figures are not trusted.
+PLAUSIBLE_SHARE_OF_FILE = 0.5
+
+
 def context_label(tokens: int) -> str:
     return f"{tokens // 1024}k" if tokens >= 1024 else str(tokens)
 
@@ -89,6 +95,18 @@ class OllamaBackend:
     def model_type(self, model: str) -> str | None:
         return detect_model_type(self.show(model), model)
 
+    def file_size(self, model: str) -> int:
+        """Size in bytes of the model's file on the server (/api/tags); 0 when it can't say."""
+        try:
+            listed = self.client.get(self._url("/api/tags"), timeout=5.0).json().get("models", [])
+        except (httpx.HTTPError, ValueError, AttributeError):
+            return 0
+        for item in listed:
+            if _same_model(item.get("name", ""), model) or _same_model(item.get("model", ""), model):
+                size = item.get("size") or 0
+                return int(size) if isinstance(size, (int, float)) else 0
+        return 0
+
     # ------------------------------------------------------------------ warm-up
 
     def warmup(self, model: str, options: dict[str, Any], thinking: str | None = None) -> Warmup:
@@ -146,6 +164,13 @@ class OllamaBackend:
                     info.context_tokens = int(item["context_length"])
                 info.total_gb = round(size / 1024**3, 1)
                 info.vram_gb = round(vram / 1024**3, 1)
+                file_bytes = self.file_size(model)
+                info.file_gb = round(file_bytes / 1024**3, 1)
+                if file_bytes and size < file_bytes * PLAUSIBLE_SHARE_OF_FILE:
+                    info.gpu_pct = None  # the share of a figure that is wrong would be wrong too
+                    info.label = (f"? (Ollama reports {info.total_gb:.1f}GB for a {info.file_gb:.1f}GB model "
+                                  f"@ {info.context})")
+                    break
                 info.gpu_pct = round(vram / size * 100.0, 0) if size > 0 else 100.0
                 info.label = f"{info.vram_gb:.1f}GB ({int(info.gpu_pct)}% GPU @ {info.context})"
                 break

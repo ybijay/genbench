@@ -10,7 +10,7 @@ GiB = 1024**3
 class FakeOllama:
     def __init__(self, answers=None, models=("m1:latest", "m2:latest"), down_hosts=(), thinking="Let me think.",
                  prompt_tokens=200, context_length=32768, context_lengths=None, completion_tokens=400,
-                 done_reason="stop", families=None, model_info=None, refuse_think=()):
+                 done_reason="stop", families=None, model_info=None, refuse_think=(), file_sizes=None, ps_sizes=None):
         self.answers = answers or {}  # substring of the prompt -> answer text
         self.models = list(models)
         self.down_hosts = set(down_hosts)
@@ -23,6 +23,8 @@ class FakeOllama:
         self.families = families or {}  # model -> family name, e.g. "qwen35moe"
         self.model_info = model_info or {}  # model -> GGUF metadata
         self.refuse_think = set(refuse_think)  # 'think' values this server rejects, e.g. {"low"}
+        self.file_sizes = file_sizes or {}  # model -> file size in /api/tags (default 19 GiB)
+        self.ps_sizes = ps_sizes or {}  # model -> (size, size_vram) in /api/ps (default 20 GiB, 18 GiB)
         self.send_final = True  # False: the stream ends without the closing message and its token counts
         self.requests: list[tuple[str, dict]] = []
 
@@ -39,7 +41,8 @@ class FakeOllama:
         path = request.url.path
         self.requests.append((path, body))
         if path == "/api/tags":
-            return httpx.Response(200, json={"models": [{"name": m} for m in self.models]})
+            return httpx.Response(200, json={"models": [{"name": m, "model": m, "size": self.file_sizes.get(m, 19 * GiB)}
+                                                        for m in self.models]})
         if path == "/api/version":
             return httpx.Response(200, json={"version": "0.12.9"})
         if path == "/api/show":
@@ -52,7 +55,8 @@ class FakeOllama:
                                              "details": details, "model_info": self.model_info.get(name, {})})
         if path == "/api/ps":
             return httpx.Response(200, json={"models": [
-                {"name": m, "model": m, "size": 20 * GiB, "size_vram": 18 * GiB,
+                {"name": m, "model": m, "size": self.ps_sizes.get(m, (20 * GiB, 18 * GiB))[0],
+                 "size_vram": self.ps_sizes.get(m, (20 * GiB, 18 * GiB))[1],
                  "context_length": self.context_lengths.get(m, self.context_length)} for m in self.models]})
         if path == "/api/generate":
             return httpx.Response(200, json={"done": True})

@@ -2,7 +2,7 @@ import json
 
 import httpx
 import pytest
-from fake_ollama import FakeOllama
+from fake_ollama import FakeOllama, GiB
 
 from genbench.backends.base import BackendError, split_options, timing_metrics
 from genbench.backends.ollama import OllamaBackend
@@ -49,6 +49,26 @@ def test_warmup_reads_load_time_vram_and_context():
     assert info.label == "18.0GB (90% GPU @ 32k)"
     chat = next(body for path, body in fake.requests if path == "/api/chat")
     assert chat["options"]["num_predict"] == 1 and chat["options"]["num_ctx"] == 65536 and chat["keep_alive"] == "15m"
+
+
+def test_warmup_records_the_model_file_size():
+    info = backend(FakeOllama()).warmup("m1", {})
+    assert (info.file_gb, info.total_gb, info.gpu_pct) == (19.0, 20.0, 90.0)
+
+
+def test_warmup_does_not_trust_memory_figures_far_below_the_file_size():
+    """Ollama's llamacpp runner reported 1.1GB in /api/ps for gemma4:26b, a 17.4GB model, fully loaded."""
+    fake = FakeOllama(file_sizes={"m1:latest": int(17.4 * GiB)}, ps_sizes={"m1:latest": (int(1.1 * GiB), int(1.1 * GiB))})
+    info = backend(fake).warmup("m1", {"num_ctx": 65536})
+    assert info.error is None
+    assert info.label == "? (Ollama reports 1.1GB for a 17.4GB model @ 32k)"
+    assert info.gpu_pct is None  # so the run doesn't warn about CPU offload, or claim 100% GPU
+    assert (info.total_gb, info.vram_gb, info.file_gb) == (1.1, 1.1, 17.4)  # the raw figures stay on record
+
+
+def test_warmup_trusts_the_figures_when_the_file_size_is_unknown():
+    fake = FakeOllama(file_sizes={"m1:latest": 0}, ps_sizes={"m1:latest": (int(1.1 * GiB), int(1.1 * GiB))})
+    assert backend(fake).warmup("m1", {}).label == "1.1GB (100% GPU @ 32k)"
 
 
 def test_warmup_failure_is_reported_not_raised():

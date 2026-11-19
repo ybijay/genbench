@@ -38,9 +38,10 @@ class BackendError(Exception):
 @dataclass
 class Warmup:
     cold_load_s: float = 0.0
-    vram_gb: float = 0.0
-    total_gb: float = 0.0
-    gpu_pct: float | None = None
+    vram_gb: float = 0.0  # as the server reports it
+    total_gb: float = 0.0  # as the server reports it
+    file_gb: float = 0.0  # size of the model file on the server, when known
+    gpu_pct: float | None = None  # None when unknown, e.g. the server's memory figures can't be right
     context: str = "default"
     context_tokens: int | None = None  # the model's context window, when the server reports it
     model_type: str | None = None  # "moe" or "dense", when known
