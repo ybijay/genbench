@@ -71,7 +71,8 @@ def test_averages_do_not_depend_on_the_python_version():
 
 
 def test_a_run_without_a_weighted_category_is_not_scored_zero_for_it():
-    cfg = Config()  # weights: accuracy .30, coding .25, architecture .20, tokens/sec .15, TTFT .10
+    cfg = Config.model_validate({"scoring": {"weights": {"accuracy": 0.30, "category.coding": 0.25, "category.architecture": 0.20,
+                                                         "speed.tokens_per_sec": 0.15, "speed.ttft": 0.10}}})
     rows = [record("m", "t1", "coding", 100.0, 100.0, 100.0)]
     [summary] = summarize(rows, cfg)
     assert summary.overall == 100.0  # not 80: no architecture test ran, so its 20% is left out

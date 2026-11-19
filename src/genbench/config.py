@@ -227,13 +227,15 @@ class Scoring(_Strict):
     difficulty_weights: dict[Literal["easy", "medium", "hard", "expert"], float] = Field(
         default_factory=lambda: {"easy": 0.5, "medium": 1.0, "hard": 1.5, "expert": 2.0}
     )
+    # Right answers first: a fast wrong answer costs more than a slow right one, because someone has to catch it.
+    # Speed is a small share, enough to separate models that answer equally well. Accuracy already covers every
+    # test, so the category columns stay out of Overall unless a config weights them.
     weights: dict[str, float] = Field(
         default_factory=lambda: {
-            "accuracy": 0.30,
-            "category.coding": 0.25,
-            "category.architecture": 0.20,
-            "speed.tokens_per_sec": 0.15,
-            "speed.ttft": 0.10,
+            "pass_rate": 0.45,
+            "accuracy": 0.45,
+            "speed.tokens_per_sec": 0.06,
+            "speed.ttft": 0.04,
         }
     )
 

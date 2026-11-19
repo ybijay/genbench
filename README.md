@@ -71,9 +71,13 @@ models on a 24 GB NVIDIA Quadro P6000, all 14 tests.
 
 Every run gets its own folder under `runs/`. Open `leaderboard.md` first:
 
-- **Overall** combines accuracy (30%), the Coding column (25%), the Architecture column (20%), generation
-  speed (15%) and time to first token (10%). Speed is scored relative to the fastest model in the run, so
-  compare Overall only between runs of the same models and tests. The weights are in `[scoring.weights]`.
+- **Overall** combines the share of tests passed (45%), accuracy (45%), generation speed (6%) and time to
+  first token (4%). Right answers come first, and speed mostly separates models that answer equally well.
+  Speed is scored relative to the fastest model in the run, so compare Overall only between runs of the
+  same models and tests. Each leaderboard states the weights it used. They are in `[scoring.weights]`; the
+  category columns can be weighted too, e.g. `"category.coding" = 0.2`.
+  Runs scored before 2026-11-19 used the original script's weights (accuracy 30%, Coding 25%, Architecture
+  20%, speed 15%, time to first token 10%); `genbench report RUN` rebuilds one with the current weights.
 - **Passed** counts tests that reached their pass mark. Accuracy is whether the answer was right; quality
   is how well it was presented.
 - **Results by test** lists, for every test, what was asked, the goal, and exactly which expectations
@@ -177,8 +181,8 @@ its size suggests) or Dense. genbench reads it from the server: an expert count 
 counting the model load, and the average matches the Tokens/Sec column of the leaderboard.
 
 Every test gets two scores from 0 to 100, accuracy (did it do what was asked) and quality (how well),
-plus PASS or FAIL against its pass mark. Overall weighs accuracy, the weighted categories and speed by
-`[scoring.weights]`.
+plus PASS or FAIL against its pass mark. Overall weighs tests passed, accuracy and speed (and any
+weighted categories) by `[scoring.weights]`.
 
 **Category columns.** Each test adds one number to its category column (Coding, Architecture, Agentic,
 Long Context): by default the average of its accuracy and quality, so a wrong answer lowers the column
@@ -198,8 +202,11 @@ console, `results.csv` and the leaderboard say why ("Ran out of context window: 
 generated tokens filled the 32,768-token window"), instead of only "Empty response".
 
 **Running a few tests.** When a run has no tests in a category that carries weight in Overall (no
-architecture tests, say), that weight is left out and the others are scaled up to 100%, and the
-leaderboard says so. Compare Overall only between runs of the same tests.
+architecture tests, say), or no test with a pass mark, that weight is left out and the others are scaled
+up to 100%, and the leaderboard says so. Compare Overall only between runs of the same tests.
+
+**Old script's results.** `genbench regrade --from-python-csv` scores with the original script's weights,
+so its leaderboard can be checked against the old one, unless your config sets its own `[scoring.weights]`.
 
 ## Configuration
 

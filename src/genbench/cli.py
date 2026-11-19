@@ -700,7 +700,7 @@ def regrade(
     """Re-score saved answers without calling a model: a run folder, or an old CSV for the parity check."""
     from genbench.grade.engine import GradeContext, grade_test
     from genbench.grade.validators import ValidatorRunner
-    from genbench.legacy import regrade_legacy
+    from genbench.legacy import regrade_legacy, with_original_weights
     from genbench.report import write_reports
     from genbench.results import RunStore, artifact_dir, new_run_dir, slug
     from genbench.runner import add_warnings
@@ -712,6 +712,7 @@ def regrade(
     root = cfg.resolve_path(cfg.run.output_dir)
 
     if from_python_csv is not None:
+        cfg = with_original_weights(cfg)  # the parity check compares Overall with the script's own leaderboard
         run_dir = new_run_dir(root, f"regrade-{slug(from_python_csv.stem)}")
         try:
             records, parity = regrade_legacy(from_python_csv, catalog, cfg, run_dir, validators.value)

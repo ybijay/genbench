@@ -15,6 +15,16 @@ from genbench.results import AttemptRecord, artifact_dir, slug, test_hash
 
 REQUIRED = {"Model", "Task", "Category", "Response Time (s)", "Accuracy (0-100)", "Category Score (0-100)", "Output"}
 HEURISTIC_NOTES = ("Bash Structure", "Incomplete Bash blocks")
+# The original script's Overall: genbench's defaults until 2026-11-19, kept so its leaderboards still reproduce.
+ORIGINAL_WEIGHTS = {"accuracy": 0.30, "category.coding": 0.25, "category.architecture": 0.20,
+                    "speed.tokens_per_sec": 0.15, "speed.ttft": 0.10}
+
+
+def with_original_weights(cfg: Config) -> Config:
+    """cfg scored like the original script, unless the config sets its own [scoring.weights]."""
+    if "weights" in cfg.scoring.model_fields_set:
+        return cfg
+    return cfg.model_copy(update={"scoring": cfg.scoring.model_copy(update={"weights": dict(ORIGINAL_WEIGHTS)})})
 
 
 @dataclass

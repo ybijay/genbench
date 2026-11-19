@@ -129,6 +129,22 @@ def unused_categories(summaries: list[ModelSummary], cfg: Config) -> list[str]:
     return [category for category in weighted if category not in present]
 
 
+def unused_weights(summaries: list[ModelSummary], cfg: Config) -> set[str]:
+    """Weight keys this run has nothing for: weighted categories without tests, and pass_rate when no test has
+    a pass mark (measured-only tests). Overall leaves them out and scales the other weights up to 100%."""
+    unused = {f"category.{category}" for category in unused_categories(summaries, cfg)}
+    if not any(s.with_mark for s in summaries):
+        unused.add("pass_rate")
+    return unused
+
+
+def overall_shares(summaries: list[ModelSummary], cfg: Config) -> dict[str, float]:
+    """What each weight key counts for in this run's Overall, in percent."""
+    weights = {key: w for key, w in cfg.scoring.weights.items() if key not in unused_weights(summaries, cfg) and w > 0}
+    total = fsum(weights.values())
+    return {key: w / total * 100.0 for key, w in weights.items()} if total > 0 else {}
+
+
 def _overall(summaries: list[ModelSummary], cfg: Config) -> None:
     if not summaries:
         return
@@ -137,8 +153,8 @@ def _overall(summaries: list[ModelSummary], cfg: Config) -> None:
     positive = [s.ttft_s for s in summaries if s.ttft_s > 0]
     min_ttft = (min(positive) if positive else 0.0) or 0.05
     # A weighted category with no tests in this run would count as zero for everyone; leave it out instead
-    # and scale the other weights back up to 100%.
-    unused = {f"category.{category}" for category in unused_categories(summaries, cfg)}
+    # and scale the other weights back up to 100%. The same goes for Passed when no test has a pass mark.
+    unused = unused_weights(summaries, cfg)
     weights = {key: weight for key, weight in scoring.weights.items() if key not in unused}
     weight_sum = fsum(weights.values())
     for s in summaries:

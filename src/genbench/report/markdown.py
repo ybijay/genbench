@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 from genbench.config import Config
 from genbench.results import AttemptRecord, skipped_tests
-from genbench.score import ModelSummary, unused_categories
+from genbench.score import ModelSummary, overall_shares, unused_categories, unused_weights
 
 
 def _cell(text: object) -> str:
@@ -15,6 +15,27 @@ def _cell(text: object) -> str:
 
 def _title(category: str) -> str:
     return category.replace("_", " ").replace("-", " ").title()
+
+
+WEIGHT_NAMES = {"pass_rate": "tests passed", "accuracy": "accuracy", "speed.tokens_per_sec": "generation speed",
+                "speed.ttft": "time to first token"}
+
+
+def _weight_name(key: str) -> str:
+    return WEIGHT_NAMES.get(key) or f"the {_title(key.split('.', 1)[1])} column"
+
+
+def overall_note(summaries: list[ModelSummary], cfg: Config) -> str:
+    """One sentence on what Overall is made of in this run, e.g. 'tests passed 45%, accuracy 45%, ...'."""
+    shares = overall_shares(summaries, cfg)
+    if not shares:
+        return ""
+    parts = [f"{_weight_name(key)} {round(share, 1):g}%" for key, share in shares.items()]
+    listed = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
+    note = f"Overall weighs {listed}."
+    if any(key.startswith("speed.") for key in shares) and cfg.scoring.normalization == "relative":
+        note += " Speed is scored against the fastest model in this run."
+    return note
 
 
 CATEGORY_NOTE = (
@@ -63,7 +84,8 @@ def leaderboard_markdown(summaries: list[ModelSummary], records: list[AttemptRec
                f"{s.prompt_eval_tps} tok/s"]
         lines.append("| " + " | ".join(row) + " |")
 
-    lines += ["", CATEGORY_NOTE]
+    note = overall_note(summaries, cfg)
+    lines += ["", note, "", CATEGORY_NOTE] if note else ["", CATEGORY_NOTE]
     used = {t.difficulty for s in summaries for t in s.tests}
     factors = {d: cfg.scoring.difficulty_weights.get(d, 1.0) for d in ("easy", "medium", "hard", "expert") if d in used}
     if len(set(factors.values())) > 1:
@@ -75,6 +97,9 @@ def leaderboard_markdown(summaries: list[ModelSummary], records: list[AttemptRec
         names = " and ".join(_title(c).lower() for c in unused)
         lines += ["", f"This run has no {names} tests, so Overall leaves that part out and scales the other weights "
                   "up to 100%. Compare Overall only between runs of the same tests."]
+    if cfg.scoring.weights.get("pass_rate") and "pass_rate" in unused_weights(summaries, cfg):
+        lines += ["", "No test in this run has a pass mark, so Overall leaves tests passed out and scales the other "
+                  "weights up to 100%."]
 
     not_counted = skipped_tests(records)
     if not_counted:
